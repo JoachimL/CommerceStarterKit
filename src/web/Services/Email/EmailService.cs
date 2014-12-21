@@ -53,7 +53,7 @@ namespace OxxCommerceStarterKit.Web.Services.Email
             return emailMessage;
         }
 
-        private bool AttemptSendOf(Models.ResetPassword emailMessage)
+        private bool AttemptSendOf(Postal.Email emailMessage)
         {
             try
             {
@@ -66,7 +66,7 @@ namespace OxxCommerceStarterKit.Web.Services.Email
             }
         }
 
-        private bool Send(Models.ResetPassword emailMessage)
+        private bool Send(Postal.Email emailMessage)
         {
             var result = _emailDispatcher.SendEmail(emailMessage, Log);
             if (result.Success)
@@ -77,7 +77,6 @@ namespace OxxCommerceStarterKit.Web.Services.Email
 
         public bool SendWelcomeEmail(string email, string subject, string body)
         {
-
             var mailSettings = _notificationSettingsRepository.GetNotificationSettings();
             if (mailSettings != null)
             {

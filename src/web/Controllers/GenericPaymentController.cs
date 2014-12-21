@@ -36,37 +36,38 @@ using LineItem = OxxCommerceStarterKit.Core.Objects.LineItem;
 
 namespace OxxCommerceStarterKit.Web.Controllers
 {
-	public class GenericPaymentController : PaymentBaseController<GenericPaymentPage>
-	{
-		private readonly IContentRepository _contentRepository;
-		private readonly IOrderRepository _orderRepository;
-	    private readonly SiteConfiguration _siteConfiguration;
+    public class GenericPaymentController : PaymentBaseController<GenericPaymentPage>
+    {
+        private readonly IContentRepository _contentRepository;
+        private readonly IOrderRepository _orderRepository;
+        private readonly ISiteSettingsProvider _siteConfiguration;
 
-		public GenericPaymentController(IContentRepository contentRepository, IOrderRepository orderRepository)
-		{
-			_contentRepository = contentRepository;
-			_orderRepository = orderRepository;
-            _siteConfiguration = SiteConfiguration.Current();
-		}
+        public GenericPaymentController(IContentRepository contentRepository, IOrderRepository orderRepository, PaymentCompleteHandler paymentCompleteHandler, ISiteSettingsProvider siteConfiguration)
+            : base(paymentCompleteHandler)
+        {
+            _contentRepository = contentRepository;
+            _orderRepository = orderRepository;
+            _siteConfiguration = siteConfiguration;
+        }
 
-		[RequireSSL]
-		public ActionResult Index(GenericPaymentPage currentPage)
-		{
-			CartHelper ch = new CartHelper(Cart.DefaultName);
+        [RequireSSL]
+        public ActionResult Index(GenericPaymentPage currentPage)
+        {
+            CartHelper ch = new CartHelper(Cart.DefaultName);
 
-			ch.Cart.AcceptChanges();
+            ch.Cart.AcceptChanges();
 
-			var orderInfo = new OrderInfo()
-			{
+            var orderInfo = new OrderInfo()
+            {
                 // Dibs expect the order to be without decimals
-				Amount = Convert.ToInt32(ch.Cart.Total * 100),
-				Currency = ch.Cart.BillingCurrency,
-				OrderId = ch.Cart.GeneratePredictableOrderNumber(),				
+                Amount = Convert.ToInt32(ch.Cart.Total * 100),
+                Currency = ch.Cart.BillingCurrency,
+                OrderId = ch.Cart.GeneratePredictableOrderNumber(),
                 ExpandOrderInformation = true
-			};
+            };
 
-		    Guid paymentMethod = Guid.Empty; // When not set (creating a page), this is null
-            if(string.IsNullOrEmpty(currentPage.PaymentMethod) == false)
+            Guid paymentMethod = Guid.Empty; // When not set (creating a page), this is null
+            if (string.IsNullOrEmpty(currentPage.PaymentMethod) == false)
                 paymentMethod = new Guid(currentPage.PaymentMethod);
 
             GenericPaymentViewModel<GenericPaymentPage> model = new GenericPaymentViewModel<GenericPaymentPage>(paymentMethod, currentPage, orderInfo, ch.Cart);
@@ -77,20 +78,20 @@ namespace OxxCommerceStarterKit.Web.Controllers
             List<Core.Objects.LineItem> lineItems = cartApiController.GetItems(Cart.DefaultName);
             TrackBeforePayment(lineItems);
 
-			return View(model);
-		}
+            return View(model);
+        }
 
-	    [HttpPost]
-	    public ActionResult Index()
-	    {
-            ReceiptPage receiptPage = _contentRepository.Get<ReceiptPage>(_siteConfiguration.Settings.ReceiptPage);
+        [HttpPost]
+        public ActionResult Index()
+        {
+            var receiptPage = _contentRepository.Get<ReceiptPage>(_siteConfiguration.GetSettings().ReceiptPage);
 
-            CartHelper cartHelper = new CartHelper(Cart.DefaultName);
+            var cartHelper = new CartHelper(Cart.DefaultName);
             string message = "";
             OrderViewModel orderViewModel = null;
 
             if (cartHelper.Cart.OrderForms.Count > 0)
-            {              
+            {
                 var orderNumber = cartHelper.Cart.GeneratePredictableOrderNumber();
 
                 _log.Debug("Order placed - order number: " + orderNumber);
@@ -125,13 +126,13 @@ namespace OxxCommerceStarterKit.Web.Controllers
             TrackAfterPayment(model);
 
             return View("ReceiptPage", model);
-	    }
+        }
 
         private void TrackBeforePayment(IEnumerable<LineItem> lineItems)
         {
             // Track Analytics. 
             GoogleAnalyticsTracking tracking = new GoogleAnalyticsTracking(ControllerContext.HttpContext);
-            
+
             // Add the products
             int i = 1;
             foreach (LineItem lineItem in lineItems)
@@ -152,81 +153,81 @@ namespace OxxCommerceStarterKit.Web.Controllers
             tracking.Custom("ga('send', 'pageview');");
         }
 
-	    /// <summary>
-	    /// Processes the payment after we get back from the
-	    /// payment provider
-	    /// </summary>
-	    /// <param name="currentPage"></param>
-	    /// <param name="result">The result posted from the provider.</param>
-	    [HttpPost]
-		[RequireSSL]
-		public ActionResult ProcessPayment(DibsPaymentPage currentPage, DibsPaymentResult result)
-		{
-            ReceiptPage receiptPage = _contentRepository.Get<ReceiptPage>(_siteConfiguration.Settings.ReceiptPage);
+        /// <summary>
+        /// Processes the payment after we get back from the
+        /// payment provider
+        /// </summary>
+        /// <param name="currentPage"></param>
+        /// <param name="result">The result posted from the provider.</param>
+        [HttpPost]
+        [RequireSSL]
+        public ActionResult ProcessPayment(DibsPaymentPage currentPage, DibsPaymentResult result)
+        {
+            ReceiptPage receiptPage = _contentRepository.Get<ReceiptPage>(_siteConfiguration.GetSettings().ReceiptPage);
 
-		    if(_log.IsDebugEnabled())
-			    _log.Debug("Payment processed: {0}", result);
+            if (_log.IsDebugEnabled())
+                _log.Debug("Payment processed: {0}", result);
 
-			CartHelper cartHelper = new CartHelper(Cart.DefaultName);
-			string message = "";
-			OrderViewModel orderViewModel = null;
+            CartHelper cartHelper = new CartHelper(Cart.DefaultName);
+            string message = "";
+            OrderViewModel orderViewModel = null;
 
-			if (cartHelper.Cart.OrderForms.Count > 0)
-			{
-				var payment = cartHelper.Cart.OrderForms[0].Payments[0] as DibsPayment;
+            if (cartHelper.Cart.OrderForms.Count > 0)
+            {
+                var payment = cartHelper.Cart.OrderForms[0].Payments[0] as DibsPayment;
 
-				if (payment != null)
-				{
-					payment.CardNumberMasked = result.CardNumberMasked;
-					payment.CartTypeName = result.CardTypeName;
-					payment.TransactionID = result.Transaction;
-					payment.TransactionType = TransactionType.Authorization.ToString();
-					payment.Status = result.Status;
-					cartHelper.Cart.Status = DIBSPaymentGateway.PaymentCompleted;
-				}
-				else
-				{
-					throw new Exception("Not a DIBS Payment");
-				}
+                if (payment != null)
+                {
+                    payment.CardNumberMasked = result.CardNumberMasked;
+                    payment.CartTypeName = result.CardTypeName;
+                    payment.TransactionID = result.Transaction;
+                    payment.TransactionType = TransactionType.Authorization.ToString();
+                    payment.Status = result.Status;
+                    cartHelper.Cart.Status = DIBSPaymentGateway.PaymentCompleted;
+                }
+                else
+                {
+                    throw new Exception("Not a DIBS Payment");
+                }
 
-				var orderNumber = cartHelper.Cart.GeneratePredictableOrderNumber();
+                var orderNumber = cartHelper.Cart.GeneratePredictableOrderNumber();
 
-				_log.Debug("Order placed - order number: " + orderNumber);
+                _log.Debug("Order placed - order number: " + orderNumber);
 
-				cartHelper.Cart.OrderNumberMethod = CartExtensions.GeneratePredictableOrderNumber;
+                cartHelper.Cart.OrderNumberMethod = CartExtensions.GeneratePredictableOrderNumber;
 
-				var results = OrderGroupWorkflowManager.RunWorkflow(cartHelper.Cart, OrderGroupWorkflowManager.CartCheckOutWorkflowName);
-				message = string.Join(", ", OrderGroupWorkflowManager.GetWarningsFromWorkflowResult(results));
+                var results = OrderGroupWorkflowManager.RunWorkflow(cartHelper.Cart, OrderGroupWorkflowManager.CartCheckOutWorkflowName);
+                message = string.Join(", ", OrderGroupWorkflowManager.GetWarningsFromWorkflowResult(results));
 
-			    if (message.Length == 0)
-			    {
-			        cartHelper.Cart.SaveAsPurchaseOrder();
+                if (message.Length == 0)
+                {
+                    cartHelper.Cart.SaveAsPurchaseOrder();
                     cartHelper.Cart.Delete();
                     cartHelper.Cart.AcceptChanges();
-			    }
+                }
 
-				var order = _orderRepository.GetOrderByTrackingNumber(orderNumber);
-				
-				// Must be run after order is complete, 
+                var order = _orderRepository.GetOrderByTrackingNumber(orderNumber);
+
+                // Must be run after order is complete, 
                 // This will release the order for shipment and 
                 // send the order receipt by email
-				OnPaymentComplete(order);
+                OnPaymentComplete(order);
 
-				orderViewModel = new OrderViewModel(order);
-			}
+                orderViewModel = new OrderViewModel(order);
+            }
 
-			ReceiptViewModel model = new ReceiptViewModel(receiptPage);
-			model.CheckoutMessage = message;
-			model.Order = orderViewModel;
+            ReceiptViewModel model = new ReceiptViewModel(receiptPage);
+            model.CheckoutMessage = message;
+            model.Order = orderViewModel;
 
             // Track successfull order in Google Analytics
             TrackAfterPayment(model);
 
-			return View("ReceiptPage", model);
-		}
+            return View("ReceiptPage", model);
+        }
 
-	    private void TrackAfterPayment(ReceiptViewModel model)
-	    {
+        private void TrackAfterPayment(ReceiptViewModel model)
+        {
             // Track Analytics 
             GoogleAnalyticsTracking tracking = new GoogleAnalyticsTracking(ControllerContext.HttpContext);
 
@@ -234,7 +235,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
             int i = 1;
             foreach (OrderLineViewModel orderLine in model.Order.OrderLines)
             {
-                if(string.IsNullOrEmpty(orderLine.Code) == false)
+                if (string.IsNullOrEmpty(orderLine.Code) == false)
                 {
                     tracking.ProductAdd(code: orderLine.Code,
                         name: orderLine.Name,
@@ -248,7 +249,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
 
             // And the transaction itself
             tracking.Purchase(model.Order.OrderNumber,
-                null, (double) model.Order.TotalAmount, (double) model.Order.Tax, (double) model.Order.Shipping);
-	    }
+                null, (double)model.Order.TotalAmount, (double)model.Order.Tax, (double)model.Order.Shipping);
+        }
     }
 }

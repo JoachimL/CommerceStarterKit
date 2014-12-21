@@ -148,7 +148,6 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
 
         public DibsPaymentViewModel(IContentRepository contentRepository, DibsPaymentPage currentPage, OrderInfo orderInfo, Cart cart) : base(new Guid(currentPage.PaymentMethod),currentPage,orderInfo,cart)
         {
-            SiteConfiguration configuration = SiteConfiguration.Current();
             PaymentMethodDto dibs = PaymentManager.GetPaymentMethodBySystemName(DIBSSystemName, SiteContext.Current.LanguageName);
             _paymentMethod = dibs;
             _currentCart = cart;

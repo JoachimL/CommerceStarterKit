@@ -61,6 +61,13 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
             Fixture.Register(() => notificationSettingsMock.Object);
         }
 
+        private void SetUpValidEmail<T>(System.Linq.Expressions.Expression<Func<T, bool>> validEmail) where T : Postal.Email
+        {
+            _emailDispatcher.Setup(
+                d => d.SendEmail(It.Is<T>(validEmail), It.IsAny<ILogger>()))
+                .Returns(new SendEmailResponse() { Success = true });
+        }
+
         public class When_sending_a_password_reset_email : EmailServiceTests
         {
             public class _and_the_system_lacks_notification_settings : When_sending_a_password_reset_email
@@ -87,9 +94,8 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
                 public void _then_the_email_is_sent_to_the_correct_recipient()
                 {
                     var email = Fixture.Create<string>();
-                    _emailDispatcher.Setup(
-                        d => d.SendEmail(It.Is<ResetPassword>(m => m.To == email), It.IsAny<ILogger>()))
-                                    .Returns(new SendEmailResponse() { Success = true });
+                    SetUpValidEmail<ResetPassword>(m => m.To == email);
+
                     var result = _sut.SendResetPasswordEmail(email, Fixture.Create<string>(), Fixture.Create<string>(),
                                                              Fixture.Create<string>(), Fixture.Create<string>());
                     result.ShouldEqual(true);
@@ -99,9 +105,7 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
                 public void _then_the_email_contains_the_supplied_hash_as_token()
                 {
                     var passwordHash = Fixture.Create<string>();
-                    _emailDispatcher.Setup(
-                        d => d.SendEmail(It.Is<ResetPassword>(m => m.Token == passwordHash), It.IsAny<ILogger>()))
-                                    .Returns(new SendEmailResponse() { Success = true });
+                    SetUpValidEmail<ResetPassword>(m => m.Token == passwordHash);
                     var result = _sut.SendResetPasswordEmail(Fixture.Create<string>(), Fixture.Create<string>(),
                                                              Fixture.Create<string>(), passwordHash,
                                                              Fixture.Create<string>());
@@ -112,9 +116,7 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
                 public void _then_the_email_refers_to_the_supplied_reset_url()
                 {
                     var resetUrl = Fixture.Create<string>();
-                    _emailDispatcher.Setup(
-                        d => d.SendEmail(It.Is<ResetPassword>(m => m.ResetUrl == resetUrl), It.IsAny<ILogger>()))
-                                    .Returns(new SendEmailResponse() { Success = true });
+                    SetUpValidEmail<ResetPassword>(m => m.ResetUrl == resetUrl);
                     var result = _sut.SendResetPasswordEmail(Fixture.Create<string>(), Fixture.Create<string>(),
                                                              Fixture.Create<string>(), Fixture.Create<string>(),
                                                              resetUrl);
@@ -125,9 +127,7 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
                 public void _then_the_email_is_sent_with_the_provided_subject()
                 {
                     var subject = Fixture.Create<string>();
-                    _emailDispatcher.Setup(
-                        d => d.SendEmail(It.Is<ResetPassword>(m => m.Subject == subject), It.IsAny<ILogger>()))
-                                    .Returns(new SendEmailResponse() { Success = true });
+                    SetUpValidEmail<ResetPassword>(m => m.Subject == subject);
                     var result = _sut.SendResetPasswordEmail(Fixture.Create<string>(), subject, Fixture.Create<string>(),
                                                              Fixture.Create<string>(), Fixture.Create<string>());
                     result.ShouldEqual(true);
@@ -136,9 +136,7 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
                 [Test]
                 public void _then_the_NotificationSettings_header_is_used_as_the_emails_header()
                 {
-                    _emailDispatcher.Setup(
-                        d => d.SendEmail(It.Is<ResetPassword>(m => m.Header == _header), It.IsAny<ILogger>()))
-                                    .Returns(new SendEmailResponse() { Success = true });
+                    SetUpValidEmail<ResetPassword>(m => m.Header == _header);
                     var result = _sut.SendResetPasswordEmail(Fixture.Create<string>(), Fixture.Create<string>(),
                                                              Fixture.Create<string>(),
                                                              Fixture.Create<string>(), Fixture.Create<string>());
@@ -148,13 +146,16 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
                 [Test]
                 public void _then_the_NotificationSettings_footer_is_used_as_the_emails_footer()
                 {
-                    _emailDispatcher.Setup(
-                        d => d.SendEmail(It.Is<ResetPassword>(m => m.Footer == _footer), It.IsAny<ILogger>()))
-                                    .Returns(new SendEmailResponse() { Success = true });
+                    SetUpValidEmail<ResetPassword>(m => FooterEquals(m.Footer, _footer));
                     var result = _sut.SendResetPasswordEmail(Fixture.Create<string>(), Fixture.Create<string>(),
                                                              Fixture.Create<string>(),
                                                              Fixture.Create<string>(), Fixture.Create<string>());
                     result.ShouldEqual(true);
+                }
+
+                private bool FooterEquals(string p, string _footer)
+                {
+                    return p == _footer;
                 }
             }
 
@@ -173,6 +174,22 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
                     var result = _sut.SendResetPasswordEmail(Fixture.Create<string>(), Fixture.Create<string>(), Fixture.Create<string>(),
                                                              Fixture.Create<string>(), Fixture.Create<string>());
                     result.ShouldEqual(false);
+                }
+            }
+        }
+
+        public class When_sending_a_welcome_email : EmailServiceTests
+        {
+            public class _and_the_system_is_set_up_correctly : When_sending_a_welcome_email
+            {
+                [Test]
+                public void _then_the_email_is_sent_to_the_new_customer()
+                {
+                    var email = Fixture.Create<string>();
+                    SetUpValidEmail<Welcome>(m => m.To == email);
+                    _sut.SendWelcomeEmail(email, It.IsAny<string>(), It.IsAny<string>());
+
+
                 }
             }
         }

@@ -1,5 +1,6 @@
 ﻿@using EPiServer.Framework.Web.Mvc.Html
 @using EPiServer.Security
+@using EPiServer.ServiceLocation
 @using OxxCommerceStarterKit.Web.Business
 @using OxxCommerceStarterKit.Web.Helpers
 @using OxxCommerceStarterKit.Web.Models.PageTypes
@@ -25,7 +26,7 @@
     @RenderSection("Head", false)
     @Html.RequiredClientResources(EPiServer.Framework.Web.RenderingTags.Header)
     @{
-        SettingsBlock settings = SiteConfiguration.Current().Settings;
+        SettingsBlock settings = ServiceLocator.Current.GetInstance<ISiteConfiguration>().Current().Settings;
         if (settings != null)
         {
             if (string.IsNullOrEmpty(settings.HeaderScripts) == false)
