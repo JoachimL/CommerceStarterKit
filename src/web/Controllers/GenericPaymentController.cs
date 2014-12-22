@@ -16,6 +16,7 @@ using AuthorizeNet.APICore;
 using EPiServer;
 using EPiServer.Core;
 using EPiServer.Logging;
+using Mediachase.Commerce;
 using Mediachase.Commerce.Orders;
 using Mediachase.Commerce.Orders.Managers;
 using Mediachase.Commerce.Website.Helpers;
@@ -33,21 +34,25 @@ using OxxCommerceStarterKit.Web.Models.PageTypes.System;
 using OxxCommerceStarterKit.Web.Models.ViewModels;
 using OxxCommerceStarterKit.Web.Models.ViewModels.Payment;
 using LineItem = OxxCommerceStarterKit.Core.Objects.LineItem;
+using OxxCommerceStarterKit.Core.Services;
 
 namespace OxxCommerceStarterKit.Web.Controllers
 {
     public class GenericPaymentController : PaymentBaseController<GenericPaymentPage>
     {
         private readonly IContentRepository _contentRepository;
-        private readonly IOrderRepository _orderRepository;
+        private readonly IOrderService _orderService;
         private readonly ISiteSettingsProvider _siteConfiguration;
+        private readonly IPaymentCompleteHandler _paymentCompleteHandler;
+        private readonly ICurrentMarket _currentMarket;
 
-        public GenericPaymentController(IContentRepository contentRepository, IOrderRepository orderRepository, PaymentCompleteHandler paymentCompleteHandler, ISiteSettingsProvider siteConfiguration)
-            : base(paymentCompleteHandler)
+        public GenericPaymentController(IContentRepository contentRepository, IOrderService orderService, IPaymentCompleteHandler paymentCompleteHandler, ISiteSettingsProvider siteConfiguration, ICurrentMarket currentMarket)
         {
             _contentRepository = contentRepository;
-            _orderRepository = orderRepository;
+            _orderService = orderService;
             _siteConfiguration = siteConfiguration;
+            _paymentCompleteHandler = paymentCompleteHandler;
+            _currentMarket = currentMarket;
         }
 
         [RequireSSL]
@@ -108,14 +113,14 @@ namespace OxxCommerceStarterKit.Web.Controllers
                     cartHelper.Cart.AcceptChanges();
                 }
 
-                var order = _orderRepository.GetOrderByTrackingNumber(orderNumber);
+                var order = _orderService.GetOrderByTrackingNumber(orderNumber);
 
                 // Must be run after order is complete, 
                 // This will release the order for shipment and 
                 // send the order receipt by email
-                OnPaymentComplete(order);
+                _paymentCompleteHandler.OnPaymentComplete(order, User.Identity);
 
-                orderViewModel = new OrderViewModel(order);
+                orderViewModel = new OrderViewModel(_currentMarket.GetCurrentMarket().DefaultCurrency.Format, order);
             }
 
             ReceiptViewModel model = new ReceiptViewModel(receiptPage);
@@ -206,14 +211,14 @@ namespace OxxCommerceStarterKit.Web.Controllers
                     cartHelper.Cart.AcceptChanges();
                 }
 
-                var order = _orderRepository.GetOrderByTrackingNumber(orderNumber);
+                var order = _orderService.GetOrderByTrackingNumber(orderNumber);
 
                 // Must be run after order is complete, 
                 // This will release the order for shipment and 
                 // send the order receipt by email
-                OnPaymentComplete(order);
+                _paymentCompleteHandler.OnPaymentComplete(order, User.Identity);
 
-                orderViewModel = new OrderViewModel(order);
+                orderViewModel = new OrderViewModel(_currentMarket.GetCurrentMarket().DefaultCurrency.Format, order);
             }
 
             ReceiptViewModel model = new ReceiptViewModel(receiptPage);

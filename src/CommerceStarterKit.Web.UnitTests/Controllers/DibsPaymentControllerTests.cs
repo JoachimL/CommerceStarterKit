@@ -1,19 +1,18 @@
-﻿using System.Security.Principal;
+﻿using System;
+using System.Globalization;
+using System.Security.Principal;
+using System.Threading;
 using System.Web.Mvc;
 using EPiServer;
 using EPiServer.Core;
+using Mediachase.Commerce.Engine.Caching;
 using Mediachase.Commerce.Orders;
+using Mediachase.Commerce.Shared;
+using Mediachase.MetaDataPlus;
 using Moq;
 using NUnit.Framework;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using OxxCommerceStarterKit.Core;
 using OxxCommerceStarterKit.Core.PaymentProviders.DIBS;
 using OxxCommerceStarterKit.Web;
-using OxxCommerceStarterKit.Web.Business;
 using OxxCommerceStarterKit.Web.Controllers;
 using OxxCommerceStarterKit.Web.Models.PageTypes.Payment;
 using OxxCommerceStarterKit.Web.Models.PageTypes.System;
@@ -21,6 +20,7 @@ using OxxCommerceStarterKit.Web.Models.ViewModels;
 using Ploeh.AutoFixture;
 using OxxCommerceStarterKit.Web.Models.PageTypes;
 using Should;
+using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 
 namespace CommerceStarterKit.Web.Controllers
 {
@@ -31,8 +31,11 @@ namespace CommerceStarterKit.Web.Controllers
         private Mock<IPaymentCompleteHandler> _paymentCompleteHandlerMock;
         private Mock<IContentRepository> _contentRepositoryMock;
         private Mock<IDibsPaymentProcessor> _dibsPaymentProcessorMock;
+        private Mock<IReceiptViewModelBuilder> _receiptViewModelBuilderMock;
+
         private Mock<IIdentityProvider> _identityProvider;
         private SettingsBlock _settingsBlock;
+        private Mock<IGoogleAnalyticsTracker> _googleAnalyticsTracker;
 
         static DibsPaymentControllerTests()
         {
@@ -44,7 +47,9 @@ namespace CommerceStarterKit.Web.Controllers
 
             RegisterPurchaseOrderCreationRules();
             Fixture.Register(
-                () => new DibsPaymentProcessingResult(Fixture.Create<PurchaseOrder>(), Fixture.Create<string>()));
+                () => new DibsPaymentProcessingResult(Fixture.Create<PurchaseOrderModel>(), Fixture.Create<string>()));
+            Fixture.Register<IFormatProvider>(() => CultureInfo.CurrentCulture.NumberFormat);
+
         }
 
         private static void RegisterPurchaseOrderCreationRules()
@@ -58,27 +63,21 @@ namespace CommerceStarterKit.Web.Controllers
                     .With(x => x.Total)
                     .With(x => x.ShippingTotal)
                     .With(x => x.TaxTotal)
-
                     .Create());
         }
 
         [SetUp]
         public virtual void SetUp()
         {
-            _paymentCompleteHandlerMock = new Mock<IPaymentCompleteHandler>();
             _dibsPaymentProcessorMock = new Mock<IDibsPaymentProcessor>();
             _settingsBlock = Fixture.Create<SettingsBlock>();
-            SetUpSiteConfigurationMock();
             SetUpContentRepository();
             _identityProvider = new Mock<IIdentityProvider>();
-            _sut = new DibsPaymentController(_identityProvider.Object, _paymentCompleteHandlerMock.Object, _contentRepositoryMock.Object, _dibsPaymentProcessorMock.Object, _siteConfigurationMock.Object);
-        }
+            _receiptViewModelBuilderMock = new Mock<IReceiptViewModelBuilder>();
+            _googleAnalyticsTracker = new Mock<IGoogleAnalyticsTracker>();
 
-        //private void SetUpSiteConfigurationMock()
-        //{
-        //    _siteConfigurationMock = new Mock<ISiteSettingsProvider>();
-        //    _siteConfigurationMock.Setup(c => c.GetSettings()).Returns(_settingsBlock);
-        //}
+            _sut = new DibsPaymentController(_identityProvider.Object, _contentRepositoryMock.Object, _dibsPaymentProcessorMock.Object, _receiptViewModelBuilderMock.Object, _googleAnalyticsTracker.Object);
+        }
 
         private void SetUpContentRepository()
         {
@@ -89,19 +88,45 @@ namespace CommerceStarterKit.Web.Controllers
 
         public class When_processing_a_completed_payment : DibsPaymentControllerTests
         {
+            private DibsPaymentResult _paymentResponse;
+            private DibsPaymentProcessingResult _processingResult;
+            private ReceiptViewModel _expectedModel;
+            public override void SetUp()
+            {
+                base.SetUp();
+
+                _paymentResponse = Fixture.Create<DibsPaymentResult>();
+                _processingResult = new DibsPaymentProcessingResult(Fixture.Create<PurchaseOrderModel>(),
+                    Fixture.Create<string>());
+                _dibsPaymentProcessorMock.Setup(x => x.ProcessPaymentResult(_paymentResponse, It.IsAny<IIdentity>()))
+                    .Returns(_processingResult);
+                _expectedModel = CreateReceiptViewModel();
+                _receiptViewModelBuilderMock.Setup(b => b.BuildFor(_processingResult)).Returns(_expectedModel);
+            }
+
             [Test]
             public void _then_the_payment_result_is_passed_to_the_payment_complete_processor()
             {
-                var paymentResponse = Fixture.Create<DibsPaymentResult>();
-                var processingResult = Fixture.Create<DibsPaymentProcessingResult>();
-                _dibsPaymentProcessorMock.Setup(x => x.ProcessPaymentResult(paymentResponse, It.IsAny<IIdentity>()))
-                    .Returns(processingResult);
-                _
 
-                ViewResult result = (ViewResult)_sut.ProcessPayment(new DibsPaymentPage(), paymentResponse);
+                var result = (ViewResult)_sut.ProcessPayment(new DibsPaymentPage(), _paymentResponse);
                 var resultModel = (ReceiptViewModel)result.Model;
 
-                resultModel.CheckoutMessage.ShouldEqual(processingResult.Message);
+                resultModel.ShouldEqual(_expectedModel);
+            }
+
+            [Test]
+            public void _then_the_purchase_is_tracked_via_google_analytics()
+            {
+                _sut.ProcessPayment(new DibsPaymentPage(), _paymentResponse);
+
+                _googleAnalyticsTracker.Verify(t => t.TrackAfterPayment(_expectedModel));
+            }
+
+            private static ReceiptViewModel CreateReceiptViewModel()
+            {
+                var modelMock = new Mock<ReceiptViewModel>();
+                modelMock.Setup(f => f.ThankYouText.ToString()).Returns(Fixture.Create<string>);
+                return modelMock.Object;
             }
         }
 

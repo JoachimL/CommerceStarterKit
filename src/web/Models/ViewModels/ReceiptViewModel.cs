@@ -31,7 +31,7 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels
 		public string CheckoutMessage { get; set; }
 
 	    public string ThankYouTitle { get; set; }
-	    public XhtmlString ThankYouText { get; set; }
+	    public virtual XhtmlString ThankYouText { get; set; }
 
 	}
 }

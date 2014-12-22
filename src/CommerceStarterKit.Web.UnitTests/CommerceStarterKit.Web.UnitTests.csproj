@@ -279,6 +279,74 @@
     <Compile Include="Services\Email\EmailServiceTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="..\web\Configs\baf.config">
+      <Link>configs\baf.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\baf.data.manager.config">
+      <Link>configs\baf.data.manager.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\baf.data.metaobject.config">
+      <Link>configs\baf.data.metaobject.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\baf.library.folders.config">
+      <Link>configs\baf.library.folders.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.app.config">
+      <Link>configs\ecf.app.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.asset.config">
+      <Link>configs\ecf.asset.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.catalog.config">
+      <Link>configs\ecf.catalog.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.cms.config">
+      <Link>configs\ecf.cms.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.customer.config">
+      <Link>configs\ecf.customer.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.customization.config">
+      <Link>configs\ecf.customization.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.marketing.config">
+      <Link>configs\ecf.marketing.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.order.config">
+      <Link>configs\ecf.order.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.security.config">
+      <Link>configs\ecf.security.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.ssl.config">
+      <Link>configs\ecf.ssl.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\ecf.workflow.config">
+      <Link>configs\ecf.workflow.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\Mediachase.Search.config">
+      <Link>configs\Mediachase.Search.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="..\web\Configs\Mediachase.Search.Filters.config">
+      <Link>configs\Mediachase.Search.Filters.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>

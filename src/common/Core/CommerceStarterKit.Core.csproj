@@ -311,10 +311,17 @@
     <Compile Include="Objects\LoginForm.cs" />
     <Compile Include="Objects\OperationResult.cs" />
     <Compile Include="Objects\ServicePoint.cs" />
+    <Compile Include="Objects\SharedViewModels\DiscountModel.cs" />
+    <Compile Include="Objects\SharedViewModels\LineItemModel.cs" />
+    <Compile Include="Objects\SharedViewModels\OrderAddressModel.cs" />
+    <Compile Include="Objects\SharedViewModels\OrderFormModel.cs" />
     <Compile Include="Objects\SharedViewModels\OrderLineViewModel.cs" />
     <Compile Include="Objects\SharedViewModels\OrderViewModel.cs" />
     <Compile Include="Objects\PersonalSettingsForm.cs" />
     <Compile Include="Objects\RegisterForm.cs" />
+    <Compile Include="Objects\SharedViewModels\PaymentModel.cs" />
+    <Compile Include="Objects\SharedViewModels\PurchaseOrderModel.cs" />
+    <Compile Include="Objects\SharedViewModels\ShipmentModel.cs" />
     <Compile Include="Objects\ShoppingCart.cs" />
     <Compile Include="PaymentProviders\DIBS\ConfigurePayment.ascx.cs">
       <DependentUpon>ConfigurePayment.ascx</DependentUpon>
@@ -350,6 +357,7 @@
     <Compile Include="Services\CartService.cs" />
     <Compile Include="Services\ExportOrderService.cs" />
     <Compile Include="Services\ICartService.cs" />
+    <Compile Include="Services\IEnumerableExtensions.cs" />
     <Compile Include="Services\IExportOrderService.cs" />
     <Compile Include="Services\IOrderService.cs" />
     <Compile Include="Services\OrderService.cs" />

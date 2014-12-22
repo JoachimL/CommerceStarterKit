@@ -19,7 +19,9 @@ using Mediachase.Commerce.Security;
 using OxxCommerceStarterKit.Core;
 using System.Security.Principal;
 using OxxCommerceStarterKit.Core.Extensions;
+using OxxCommerceStarterKit.Core.Repositories.Interfaces;
 using OxxCommerceStarterKit.Web.Services.Email;
+using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 
 namespace OxxCommerceStarterKit.Web.Controllers
 {
@@ -27,16 +29,19 @@ namespace OxxCommerceStarterKit.Web.Controllers
     {
         private static readonly ILogger Log = LogManager.GetLogger();
         private readonly IEmailService _emailService;
-        private ICustomerFactory _customerFactory; 
+        private readonly ICustomerFactory _customerFactory;
+        private readonly IOrderRepository _orderRepository;
 
-        public PaymentCompleteHandler(IEmailService emailService, ICustomerFactory customerFactory)
+        public PaymentCompleteHandler(IEmailService emailService, ICustomerFactory customerFactory, IOrderRepository orderRepository)
         {
             _emailService = emailService;
             _customerFactory = customerFactory;
+            _orderRepository = orderRepository;
         }
 
-        public void OnPaymentComplete(PurchaseOrder order, IIdentity identity)
+        public void OnPaymentComplete(PurchaseOrderModel orderModel, IIdentity identity)
         {
+            var order = _orderRepository.GetOrderByTrackingNumber(orderModel.TrackingNumber);
             // Create customer if anonymous
             CreateUpdateCustomer(order, identity);
             
@@ -48,7 +53,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
             order.AcceptChanges();
 
             // Send Email receipt 
-            bool sendOrderReceiptResult = SendOrderReceipt(order);
+            bool sendOrderReceiptResult = SendOrderReceipt(orderModel);
             Log.Debug("Sending receipt e-mail - " + (sendOrderReceiptResult ? "success" : "failed"));
 
             try
@@ -65,7 +70,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
             ForwardOrderToErp(order);
         }
 
-        public bool SendOrderReceipt(PurchaseOrder order)
+        public bool SendOrderReceipt(PurchaseOrderModel order)
         {
             return _emailService.SendOrderReceipt(order);
         }

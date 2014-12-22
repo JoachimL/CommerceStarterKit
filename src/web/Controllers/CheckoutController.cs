@@ -53,8 +53,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
         private readonly LocalizationService _localizationService;
         private readonly ICustomerFactory _customerFactory;
 
-        public CheckoutController(CustomerAddressRepository customerAddressRepository, IContentRepository contentRepository, ICurrentMarket currentMarket, ICustomerFactory customerFactory, LocalizationService localizationService, PaymentCompleteHandler paymentCompleteHandler)
-            : base(paymentCompleteHandler)
+        public CheckoutController(CustomerAddressRepository customerAddressRepository, IContentRepository contentRepository, ICurrentMarket currentMarket, ICustomerFactory customerFactory, LocalizationService localizationService)
         {
             _customerAddressRepository = customerAddressRepository;
             _contactRepository = new ContactRepository();

@@ -12,18 +12,19 @@ using OxxCommerceStarterKit.Core.PaymentProviders.Payment;
 using OxxCommerceStarterKit.Core.Repositories.Interfaces;
 using EPiServer.Logging;
 using System.Security.Principal;
+using OxxCommerceStarterKit.Core.Services;
 
 namespace OxxCommerceStarterKit.Web.Controllers
 {
     public class DibsPaymentProcessor : IDibsPaymentProcessor
     {
         private static readonly ILogger Log = LogManager.GetLogger();
-        private readonly IOrderRepository _orderRepository;
+        private readonly IOrderService _orderService;
         private readonly IPaymentCompleteHandler _paymentCompleteHandler;
 
-        public DibsPaymentProcessor(IOrderRepository orderRepository, IPaymentCompleteHandler paymentCompleteHandler)
+        public DibsPaymentProcessor(IOrderService orderService, IPaymentCompleteHandler paymentCompleteHandler)
         {
-            _orderRepository = orderRepository;
+            _orderService = orderService;
             _paymentCompleteHandler = paymentCompleteHandler;
         }
 
@@ -64,7 +65,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
                 cartHelper.Cart.AcceptChanges();
             }
 
-            var order = _orderRepository.GetOrderByTrackingNumber(orderNumber);
+            var order = _orderService.GetOrderByTrackingNumber(orderNumber);
 
             // Must be run after order is complete, 
             // This will release the order for shipment and 

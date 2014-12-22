@@ -1,12 +1,13 @@
 using System.Security.Principal;
 using Mediachase.Commerce.Orders;
+using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 
 namespace OxxCommerceStarterKit.Web.Controllers
 {
     public interface IPaymentCompleteHandler
     {
-        void OnPaymentComplete(PurchaseOrder order, IIdentity identity);
-        bool SendOrderReceipt(PurchaseOrder order);
+        void OnPaymentComplete(PurchaseOrderModel orderModel, IIdentity identity);
+        bool SendOrderReceipt(PurchaseOrderModel order);
         void ForwardOrderToErp(PurchaseOrder purchaseOrder);
         void AdjustStocks(PurchaseOrder order);
     }

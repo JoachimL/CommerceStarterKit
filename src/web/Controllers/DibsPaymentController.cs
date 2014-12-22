@@ -16,6 +16,7 @@ using EPiServer.Logging;
 using Mediachase.Commerce.Orders;
 using Mediachase.Commerce.Website.Helpers;
 using OxxCommerceStarterKit.Core.Extensions;
+using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 using OxxCommerceStarterKit.Core.PaymentProviders;
 using OxxCommerceStarterKit.Core.PaymentProviders.DIBS;
 using OxxCommerceStarterKit.Web.Business;
@@ -33,14 +34,15 @@ namespace OxxCommerceStarterKit.Web.Controllers
         private readonly IDibsPaymentProcessor _paymentProcessor;
 	    private readonly IIdentityProvider _identityProvider;
 	    private readonly IReceiptViewModelBuilder _receiptViewModelBuilder;
+	    private readonly IGoogleAnalyticsTracker _googleAnalyticsTracker;
 
-	    public DibsPaymentController(IIdentityProvider identityProvider, IPaymentCompleteHandler paymentCompleteHandler,  IContentRepository contentRepository, IDibsPaymentProcessor paymentProcessor, IReceiptViewModelBuilder receiptViewModelBuilder)
-            : base(paymentCompleteHandler)
+	    public DibsPaymentController(IIdentityProvider identityProvider, IContentRepository contentRepository, IDibsPaymentProcessor paymentProcessor, IReceiptViewModelBuilder receiptViewModelBuilder, IGoogleAnalyticsTracker googleAnalyticsTracker)
 		{
 		    _identityProvider = identityProvider;
 			_contentRepository = contentRepository;
 		    _paymentProcessor = paymentProcessor;
 		    _receiptViewModelBuilder = receiptViewModelBuilder;
+	        _googleAnalyticsTracker = googleAnalyticsTracker;
 		}
 
 		[RequireSSL]
@@ -110,6 +112,9 @@ namespace OxxCommerceStarterKit.Web.Controllers
 			    _log.Debug("Payment processed: {0}", result);
 
 	        var model = GetReceiptForPayment(result);
+
+            // Track successfull order in Google Analytics
+	        _googleAnalyticsTracker.TrackAfterPayment(model);
 
 	        return View("ReceiptPage", model);
 		}

@@ -11,11 +11,13 @@ Copyright (C) 2013-2014 BV Network AS
 using System.Linq;
 using System.Web.Mvc;
 using EPiServer.Security;
+using Mediachase.Commerce;
 using Mediachase.Commerce.Customers;
 using Mediachase.Commerce.Orders;
 using Mediachase.Commerce.Security;
 using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 using OxxCommerceStarterKit.Core.Repositories.Interfaces;
+using OxxCommerceStarterKit.Core.Services;
 using OxxCommerceStarterKit.Web.Models.PageTypes;
 using OxxCommerceStarterKit.Web.Models.ViewModels;
 
@@ -23,11 +25,13 @@ namespace OxxCommerceStarterKit.Web.Controllers
 {
 	public class OrdersPageController : PageControllerBase<OrdersPage>
 	{
-		private readonly IOrderRepository _orderRepository;
+		private readonly IOrderService _orderService;
+	    private readonly ICurrentMarket _currentMarket;
 
-		public OrdersPageController(IOrderRepository orderRepository)
+		public OrdersPageController(IOrderService orderService, ICurrentMarket currentMarket)
 		{
-			_orderRepository = orderRepository;
+			_orderService = orderService;
+		    _currentMarket = currentMarket;
 		}
 
 
@@ -36,16 +40,16 @@ namespace OxxCommerceStarterKit.Web.Controllers
 		{
 			var model = new OrdersPageViewModel(currentPage);
 			model.CustomerName = CustomerContext.Current.CurrentContact.FirstName;
-            var orders = _orderRepository.GetOrdersByUserId(EPiServer.Security.PrincipalInfo.CurrentPrincipal.GetContactId());
-			model.Orders = orders.OrderByDescending(x => x.Created).Select(x => CreateOrderViewModel(x)).ToList();
+            var orders = _orderService.GetOrdersByUserId(EPiServer.Security.PrincipalInfo.CurrentPrincipal.GetContactId());
+			model.Orders = orders.OrderByDescending(x => x.Created).Select(CreateOrderViewModel).ToList();
 			
 			return View(model);
 		}
 
 
-		private OrderViewModel CreateOrderViewModel(PurchaseOrder order)
+		private OrderViewModel CreateOrderViewModel(PurchaseOrderModel order)
 		{
-			var model = new OrderViewModel(order);
+            var model = new OrderViewModel(_currentMarket.GetCurrentMarket().DefaultCurrency.Format, order);
 			// TODO order-payment method
 			model.PaymentMethod = order.ProviderId;
 

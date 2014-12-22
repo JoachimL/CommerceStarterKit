@@ -7,11 +7,8 @@ using System.Threading.Tasks;
 
 namespace CommerceStarterKit.Web.Controllers
 {
-    public class PurchaseOrderStub : PurchaseOrder
+    public abstract class PurchaseOrderStub : PurchaseOrder
     {
-        public PurchaseOrderStub()
-        {
-            
-        }
+        
     }
 }

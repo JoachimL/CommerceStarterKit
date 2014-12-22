@@ -7,6 +7,7 @@ using EPiServer.Core;
 using EPiServer.Core.Html.StringParsing;
 using EPiServer.Logging;
 using EPiServer.ServiceLocation;
+using Mediachase.Commerce;
 using Moq;
 using NUnit.Framework;
 using OxxCommerceStarterKit.Web.Models.ViewModels.Email;
@@ -23,6 +24,7 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
         private static readonly Fixture Fixture = new Fixture();
         private Mock<INotificationSettingsRepository> _notificationSettingsRepositoryMock;
         private Mock<IEmailDispatcher> _emailDispatcher;
+        private Mock<ICurrentMarket> _currentMarketMock;
         private EmailService _sut;
         private string _header;
         private string _footer;
@@ -33,7 +35,8 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
         {
             SetUpNotificationSettings();
             _emailDispatcher = new Mock<IEmailDispatcher>();
-            _sut = new EmailService(_notificationSettingsRepositoryMock.Object, _emailDispatcher.Object);
+            _currentMarketMock = new Mock<ICurrentMarket>();
+            _sut = new EmailService(_notificationSettingsRepositoryMock.Object, _emailDispatcher.Object, _currentMarketMock.Object);
         }
 
         private void SetUpNotificationSettings()

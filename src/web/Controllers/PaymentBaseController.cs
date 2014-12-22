@@ -28,18 +28,6 @@ namespace OxxCommerceStarterKit.Web.Controllers
 {
     public class PaymentBaseController<T> : PageControllerBase<T> where T : PageData
     {
-        private readonly IPaymentCompleteHandler _paymentCompleteHandler;
-
-        public PaymentBaseController(IPaymentCompleteHandler paymentCompleteHandler)
-        {
-            _paymentCompleteHandler = paymentCompleteHandler;
-        }
-
-        protected void OnPaymentComplete(PurchaseOrder order)
-        {
-            _paymentCompleteHandler.OnPaymentComplete(order, User.Identity);
-        }
-
         /// <summary>
         /// Expires any products where no variants have any inventory. This effectively means there
         /// is nothing to sell for this product.

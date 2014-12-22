@@ -26,7 +26,7 @@
     @RenderSection("Head", false)
     @Html.RequiredClientResources(EPiServer.Framework.Web.RenderingTags.Header)
     @{
-        SettingsBlock settings = ServiceLocator.Current.GetInstance<ISiteConfiguration>().Current().Settings;
+        SettingsBlock settings = ServiceLocator.Current.GetInstance<ISiteSettingsProvider>().GetSettings();
         if (settings != null)
         {
             if (string.IsNullOrEmpty(settings.HeaderScripts) == false)

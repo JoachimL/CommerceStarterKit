@@ -10,6 +10,7 @@ Copyright (C) 2013-2014 BV Network AS
 
 using EPiServer.Framework.Localization;
 using EPiServer.ServiceLocation;
+using Mediachase.Commerce;
 using Mediachase.Commerce.Orders;
 using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 
@@ -17,17 +18,17 @@ namespace OxxCommerceStarterKit.Web.Services.Email.Models
 {
     public class Receipt : EmailBase
     {
-		private PurchaseOrder _purchaseOrder;
-		public PurchaseOrder PurchaseOrder { get { return _purchaseOrder; } }
+		private PurchaseOrderModel _purchaseOrder;
+		public PurchaseOrderModel PurchaseOrder { get { return _purchaseOrder; } }
 
 		private OrderViewModel _orderViewModel;
 		public OrderViewModel OrderViewModel { get { return _orderViewModel; } }
 
-		public Receipt(PurchaseOrder purchaseOrder)
+		public Receipt(IMarket currentMarket, PurchaseOrderModel purchaseOrder)
 		{
 			_purchaseOrder = purchaseOrder;
 
-			_orderViewModel = new OrderViewModel(_purchaseOrder);
+            _orderViewModel = new OrderViewModel(currentMarket.DefaultCurrency.Format);
 
 			To = _orderViewModel.Email;
 

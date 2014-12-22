@@ -10,7 +10,9 @@ Copyright (C) 2013-2014 BV Network AS
 
 using System;
 using EPiServer.Logging;
+using Mediachase.Commerce;
 using Mediachase.Commerce.Orders;
+using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 using OxxCommerceStarterKit.Web.Models.ViewModels.Email;
 using OxxCommerceStarterKit.Web.Services.Email.Models;
 
@@ -21,11 +23,13 @@ namespace OxxCommerceStarterKit.Web.Services.Email
         private static readonly ILogger Log = LogManager.GetLogger();
         private readonly INotificationSettingsRepository _notificationSettingsRepository;
         private readonly IEmailDispatcher _emailDispatcher;
+        private readonly ICurrentMarket _currentMarket;
 
-        public EmailService(INotificationSettingsRepository notificationSettingsRepository, IEmailDispatcher emailDispatcher)
+        public EmailService(INotificationSettingsRepository notificationSettingsRepository, IEmailDispatcher emailDispatcher, ICurrentMarket currentMarket)
         {
             _notificationSettingsRepository = notificationSettingsRepository;
             _emailDispatcher = emailDispatcher;
+            _currentMarket = currentMarket;
         }
 
         public bool SendResetPasswordEmail(string email, string subject, string body, string passwordHash, string resetUrl)
@@ -102,12 +106,12 @@ namespace OxxCommerceStarterKit.Web.Services.Email
             return false;
         }
 
-        public bool SendOrderReceipt(PurchaseOrder order)
+        public bool SendOrderReceipt(PurchaseOrderModel order)
         {
             var mailSettings = _notificationSettingsRepository.GetNotificationSettings();
             if (mailSettings != null)
             {
-                var emailMessage = new Receipt(order);
+                var emailMessage = new Receipt(_currentMarket.GetCurrentMarket(), order);
                 emailMessage.From = mailSettings.From;
                 emailMessage.Header = mailSettings.MailHeader.ToString();
                 emailMessage.Footer = mailSettings.MailFooter.ToString();
@@ -127,12 +131,12 @@ namespace OxxCommerceStarterKit.Web.Services.Email
             return false;
         }
 
-        public bool SendDeliveryReceipt(PurchaseOrder order, string language = null)
+        public bool SendDeliveryReceipt(PurchaseOrderModel order, string language = null)
         {
             var mailSettings = _notificationSettingsRepository.GetNotificationSettings(language);
             if (mailSettings != null)
             {
-                var emailMessage = new DeliveryReceipt(order);
+                var emailMessage = new DeliveryReceipt(_currentMarket, order);
                 emailMessage.From = mailSettings.From;
                 emailMessage.Header = mailSettings.MailHeader.ToString();
                 emailMessage.Footer = mailSettings.MailFooter.ToString();

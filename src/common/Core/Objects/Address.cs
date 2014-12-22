@@ -14,12 +14,13 @@ using EPiServer.ServiceLocation;
 using Mediachase.Commerce;
 using Mediachase.Commerce.Orders;
 using OxxCommerceStarterKit.Core.Attributes;
+using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 
 namespace OxxCommerceStarterKit.Core.Objects
 {
     public class Address : ICloneable
     {
-        public Address(OrderAddress address)
+        public Address(OrderAddressModel address)
         {
 			if (address != null)
 			{
