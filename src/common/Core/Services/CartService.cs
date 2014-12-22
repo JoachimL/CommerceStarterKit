@@ -23,6 +23,7 @@ using Mediachase.Commerce.Website.Helpers;
 using OxxCommerceStarterKit.Core.Extensions;
 using OxxCommerceStarterKit.Core.Objects;
 using LineItem = OxxCommerceStarterKit.Core.Objects.LineItem;
+using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 
 namespace OxxCommerceStarterKit.Core.Services
 {
@@ -319,6 +320,35 @@ namespace OxxCommerceStarterKit.Core.Services
 			return discounts;
 		}
 
+        public static List<DiscountModel> GetAllDiscounts(PurchaseOrderModel order)
+        {
+            var discounts = new List<DiscountModel>();
+            foreach (var form in order.OrderForms)
+            {
+                foreach (var discount in form.Discounts.Where(x => !String.IsNullOrEmpty(x.DiscountCode)))
+                {
+                    AddToDiscountList(discount, discounts);
+                }
+
+                foreach (var item in form.LineItems)
+                {
+                    foreach (var discount in item.Discounts.Where(x => !String.IsNullOrEmpty(x.DiscountCode)))
+                    {
+                        AddToDiscountList(discount, discounts);
+                    }
+                }
+
+                foreach (var shipment in form.Shipments)
+                {
+                    foreach (var discount in shipment.Discounts.Where(x => !String.IsNullOrEmpty(x.DiscountCode)))
+                    {
+                        AddToDiscountList(discount, discounts);
+                    }
+                }
+            }
+            return discounts;
+        }
+
 		public static void AddToDiscountList(Discount discount, List<Discount> discounts)
 		{
 			if (!discounts.Exists(x => x.DiscountCode.Equals(discount.DiscountCode)))
@@ -326,5 +356,13 @@ namespace OxxCommerceStarterKit.Core.Services
 				discounts.Add(discount);
 			}
 		}
+
+        public static void AddToDiscountList(DiscountModel discount, List<DiscountModel> discounts)
+        {
+            if (!discounts.Exists(x => x.DiscountCode.Equals(discount.DiscountCode)))
+            {
+                discounts.Add(discount);
+            }
+        }
 	}
 }

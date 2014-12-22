@@ -38,7 +38,7 @@ using LineItem = Mediachase.Commerce.Orders.LineItem;
 namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
 {
     public class DibsPaymentViewModel : GenericPaymentViewModel<DibsPaymentPage>
-    {        
+    {
         private Cart _currentCart = null;
         private Mediachase.Commerce.Orders.Payment _payment;
         private PaymentMethodDto _paymentMethod;
@@ -48,9 +48,9 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
         //private string _callbackUrl;
 
         public const string DIBSSystemName = "DIBS";
-        public string ProcessingUrl { get; set; }        
+        public string ProcessingUrl { get; set; }
         public string CallbackUrl { get; set; }
-		public bool IsTest { get; set; }
+        public bool IsTest { get; set; }
 
         /// <summary>
         /// Gets or sets the order line data sent to DIBS
@@ -75,7 +75,7 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
         public string MAC { get; set; }
         public string AcceptReturnUrl { get; set; }
         public string CancelReturnUrl { get; set; }
-        
+
 
         public string Key { get; set; }
 
@@ -146,9 +146,9 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
         }
 
 
-        public DibsPaymentViewModel(IContentRepository contentRepository, DibsPaymentPage currentPage, OrderInfo orderInfo, Cart cart) : base(new Guid(currentPage.PaymentMethod),currentPage,orderInfo,cart)
+        public DibsPaymentViewModel(IContentRepository contentRepository, DibsPaymentPage currentPage, OrderInfo orderInfo, Cart cart)
+            : base(new Guid(currentPage.PaymentMethod), currentPage, orderInfo, cart)
         {
-            SiteConfiguration configuration = SiteConfiguration.Current();
             PaymentMethodDto dibs = PaymentManager.GetPaymentMethodBySystemName(DIBSSystemName, SiteContext.Current.LanguageName);
             _paymentMethod = dibs;
             _currentCart = cart;
@@ -156,7 +156,7 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
             DIBSPaymentGateway gw = new DIBSPaymentGateway();
 
             orderInfo.Merchant = gw.Merchant;
-           
+
             var paymentRedirectUrl = GetViewUrl(currentPage.ContentLink);
             IsTest = orderInfo.IsTest;
 
@@ -167,21 +167,21 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
 
             CancelReturnUrl = baseUrl + paymentRedirectUrl + "CancelPayment";
             orderInfo.CancelReturnUrl = CancelReturnUrl;
-            
-			Mediachase.Commerce.Orders.Payment[] payments;
-			if (CurrentCart != null && CurrentCart.OrderForms != null && CurrentCart.OrderForms.Count > 0)
-			{
-				payments = CurrentCart.OrderForms[0].Payments.ToArray();
-			}
-			else
-			{
-				payments = new Mediachase.Commerce.Orders.Payment[0];
-			}
+
+            Mediachase.Commerce.Orders.Payment[] payments;
+            if (CurrentCart != null && CurrentCart.OrderForms != null && CurrentCart.OrderForms.Count > 0)
+            {
+                payments = CurrentCart.OrderForms[0].Payments.ToArray();
+            }
+            else
+            {
+                payments = new Mediachase.Commerce.Orders.Payment[0];
+            }
             _payment = payments.FirstOrDefault(c => c.PaymentMethodId.Equals(dibs.PaymentMethod.Rows[0]["PaymentMethodId"]));
-            ProcessingUrl = DIBSPaymentGateway.GetParameterByName(dibs, DIBSPaymentGateway.ProcessingUrl).Value;            
-            Key = gw.Key;            
+            ProcessingUrl = DIBSPaymentGateway.GetParameterByName(dibs, DIBSPaymentGateway.ProcessingUrl).Value;
+            Key = gw.Key;
             OrderID = orderInfo.OrderId;
-            
+
             ShaCalculator calculator = new ShaCalculator(Key);
 
             if (CurrentCart != null && CurrentCart.OrderForms != null && CurrentCart.OrderForms.Count > 0)
@@ -196,7 +196,7 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
 
             MAC = calculator.GetMac(orderInfo);
 
-                      
+
             this.OrderInfo = orderInfo.ToString();
         }
 
@@ -205,7 +205,7 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
             var url = UrlResolver.Current.GetUrl(
                 contentLink,
                 null,
-                new VirtualPathArguments() {ContextMode = ContextMode.Default});
+                new VirtualPathArguments() { ContextMode = ContextMode.Default });
             return url;
         }
 
@@ -230,13 +230,13 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
             var items = new List<string>();
             foreach (LineItem lineItem in lineItems)
             {
-                var lineInfo = string.Format("{0};{1};{2};{3};{4};{5}", 
-                    (int) lineItem.Quantity, 
+                var lineInfo = string.Format("{0};{1};{2};{3};{4};{5}",
+                    (int)lineItem.Quantity,
                     "pcs",
-                    lineItem.DisplayName, 
-                    (int) (GetTotalPriceWithoutVat(lineItem, orderInfo.VatPercent) * 100), 
-                    lineItem.LineItemId, 
-                    (int) orderInfo.VatPercent * 100);
+                    lineItem.DisplayName,
+                    (int)(GetTotalPriceWithoutVat(lineItem, orderInfo.VatPercent) * 100),
+                    lineItem.LineItemId,
+                    (int)orderInfo.VatPercent * 100);
                 items.Add(lineInfo);
                 orderInfo.OrderLines.Add(lineInfo);
             }

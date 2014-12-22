@@ -134,7 +134,6 @@ namespace OxxCommerceStarterKit.Web.Models.ViewModels.Payment
 
         public GenericPaymentViewModel(Guid paymentMethod, T currentPage, OrderInfo orderInfo, Cart cart) : base(currentPage)
         {
-            SiteConfiguration configuration = SiteConfiguration.Current();
             PaymentMethodDto payment = PaymentManager.GetPaymentMethod(paymentMethod);
             _paymentMethod = payment;
             _currentCart = cart;

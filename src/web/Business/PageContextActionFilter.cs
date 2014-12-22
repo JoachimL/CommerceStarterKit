@@ -32,16 +32,18 @@ namespace OxxCommerceStarterKit.Web.Business
         private readonly IContentLoader _contentLoader;
         private readonly UrlResolver _urlResolver;
         private readonly ILanguageBranchRepository _languageBranchRepository;
+        private readonly ISiteSettingsProvider _siteConfiguration;
         // private readonly ViewModelFactory _modelFactory;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="PageContextActionFilter"/> class.
         /// </summary>
-        public PageContextActionFilter(IContentLoader contentLoader, UrlResolver urlResolver, ILanguageBranchRepository languageBranchRepository)
+        public PageContextActionFilter(IContentLoader contentLoader, UrlResolver urlResolver, ILanguageBranchRepository languageBranchRepository, ISiteSettingsProvider siteConfiguration)
         {
             _contentLoader = contentLoader;
             _urlResolver = urlResolver;
             _languageBranchRepository = languageBranchRepository;
+            _siteConfiguration = siteConfiguration;
         }
 
         /// <summary>
@@ -50,7 +52,7 @@ namespace OxxCommerceStarterKit.Web.Business
         /// <param name="filterContext">The filter context.</param>
         public void OnResultExecuting(ResultExecutingContext filterContext)
         {
-            SettingsBlock settings = SiteConfiguration.Current().Settings;
+            SettingsBlock settings = _siteConfiguration.GetSettings();
 
             // This can actually be null if we have a problem with our language settings
             if (settings != null)

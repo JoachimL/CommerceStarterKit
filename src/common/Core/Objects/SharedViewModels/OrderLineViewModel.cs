@@ -25,17 +25,17 @@ namespace OxxCommerceStarterKit.Core.Objects.SharedViewModels
 		public string ArticleNumber { get; set; }
 
 		public OrderLineViewModel() { }
-		public OrderLineViewModel(Mediachase.Commerce.Orders.LineItem item)
+		public OrderLineViewModel(LineItemModel item)
 		{
 		    Code = item.CatalogEntryId;
 			Name = item.DisplayName;
-			Description = item.GetStringValue(Constants.Metadata.LineItem.Description);
+			Description = item.Description;
 			Price = item.ExtendedPrice;
 			Discount = item.LineItemDiscountAmount + item.OrderLevelDiscountAmount;
-			Quantity = (int)item.Quantity;
-			Size = item.GetStringValue(Constants.Metadata.LineItem.Size);
-			Color = item.GetStringValue(Constants.Metadata.LineItem.Color);
-			ArticleNumber = item.GetStringValue(Constants.Metadata.LineItem.ArticleNumber);
+			Quantity = item.Quantity;
+			Size = item.Size;
+			Color = item.Color;
+			ArticleNumber = item.ArticleNumber;
 		}
 	}
 }

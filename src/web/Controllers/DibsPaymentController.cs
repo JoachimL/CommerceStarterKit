@@ -10,26 +10,18 @@ Copyright (C) 2013-2014 BV Network AS
 
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Web.Mvc;
-using AuthorizeNet.APICore;
 using EPiServer;
-using EPiServer.Core;
 using EPiServer.Logging;
 using Mediachase.Commerce.Orders;
-using Mediachase.Commerce.Orders.Managers;
 using Mediachase.Commerce.Website.Helpers;
 using OxxCommerceStarterKit.Core.Extensions;
 using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 using OxxCommerceStarterKit.Core.PaymentProviders;
 using OxxCommerceStarterKit.Core.PaymentProviders.DIBS;
-using OxxCommerceStarterKit.Core.PaymentProviders.Payment;
-using OxxCommerceStarterKit.Core.Repositories.Interfaces;
 using OxxCommerceStarterKit.Web.Business;
 using OxxCommerceStarterKit.Web.Business.Analytics;
-using OxxCommerceStarterKit.Web.Models.PageTypes;
 using OxxCommerceStarterKit.Web.Models.PageTypes.Payment;
-using OxxCommerceStarterKit.Web.Models.PageTypes.System;
 using OxxCommerceStarterKit.Web.Models.ViewModels;
 using OxxCommerceStarterKit.Web.Models.ViewModels.Payment;
 using LineItem = OxxCommerceStarterKit.Core.Objects.LineItem;
@@ -39,14 +31,18 @@ namespace OxxCommerceStarterKit.Web.Controllers
 	public class DibsPaymentController : PaymentBaseController<DibsPaymentPage>
 	{
 		private readonly IContentRepository _contentRepository;
-		private readonly IOrderRepository _orderRepository;
-	    private readonly SiteConfiguration _siteConfiguration;
+        private readonly IDibsPaymentProcessor _paymentProcessor;
+	    private readonly IIdentityProvider _identityProvider;
+	    private readonly IReceiptViewModelBuilder _receiptViewModelBuilder;
+	    private readonly IGoogleAnalyticsTracker _googleAnalyticsTracker;
 
-		public DibsPaymentController(IContentRepository contentRepository, IOrderRepository orderRepository)
+	    public DibsPaymentController(IIdentityProvider identityProvider, IContentRepository contentRepository, IDibsPaymentProcessor paymentProcessor, IReceiptViewModelBuilder receiptViewModelBuilder, IGoogleAnalyticsTracker googleAnalyticsTracker)
 		{
+		    _identityProvider = identityProvider;
 			_contentRepository = contentRepository;
-			_orderRepository = orderRepository;
-            _siteConfiguration = SiteConfiguration.Current();
+		    _paymentProcessor = paymentProcessor;
+		    _receiptViewModelBuilder = receiptViewModelBuilder;
+	        _googleAnalyticsTracker = googleAnalyticsTracker;
 		}
 
 		[RequireSSL]
@@ -112,93 +108,21 @@ namespace OxxCommerceStarterKit.Web.Controllers
 		[RequireSSL]
 		public ActionResult ProcessPayment(DibsPaymentPage currentPage, DibsPaymentResult result)
 		{
-            ReceiptPage receiptPage = _contentRepository.Get<ReceiptPage>(_siteConfiguration.Settings.ReceiptPage);
-
 		    if(_log.IsDebugEnabled())
 			    _log.Debug("Payment processed: {0}", result);
 
-			CartHelper cartHelper = new CartHelper(Cart.DefaultName);
-			string message = "";
-			OrderViewModel orderViewModel = null;
-
-			if (cartHelper.Cart.OrderForms.Count > 0)
-			{
-				var payment = cartHelper.Cart.OrderForms[0].Payments[0] as DibsPayment;
-
-				if (payment != null)
-				{
-					payment.CardNumberMasked = result.CardNumberMasked;
-					payment.CartTypeName = result.CardTypeName;
-					payment.TransactionID = result.Transaction;
-					payment.TransactionType = TransactionType.Authorization.ToString();
-					payment.Status = result.Status;
-					cartHelper.Cart.Status = DIBSPaymentGateway.PaymentCompleted;
-				}
-				else
-				{
-					throw new Exception("Not a DIBS Payment");
-				}
-
-				var orderNumber = cartHelper.Cart.GeneratePredictableOrderNumber();
-
-				_log.Debug("Order placed - order number: " + orderNumber);
-
-				cartHelper.Cart.OrderNumberMethod = CartExtensions.GeneratePredictableOrderNumber;
-
-				var results = OrderGroupWorkflowManager.RunWorkflow(cartHelper.Cart, OrderGroupWorkflowManager.CartCheckOutWorkflowName);
-				message = string.Join(", ", OrderGroupWorkflowManager.GetWarningsFromWorkflowResult(results));
-
-			    if (message.Length == 0)
-			    {
-			        cartHelper.Cart.SaveAsPurchaseOrder();
-                    cartHelper.Cart.Delete();
-                    cartHelper.Cart.AcceptChanges();
-			    }
-
-				var order = _orderRepository.GetOrderByTrackingNumber(orderNumber);
-				
-				// Must be run after order is complete, 
-                // This will release the order for shipment and 
-                // send the order receipt by email
-				OnPaymentComplete(order);
-
-				orderViewModel = new OrderViewModel(order);
-			}
-
-			ReceiptViewModel model = new ReceiptViewModel(receiptPage);
-			model.CheckoutMessage = message;
-			model.Order = orderViewModel;
+	        var model = GetReceiptForPayment(result);
 
             // Track successfull order in Google Analytics
-            TrackAfterPayment(model);
+	        _googleAnalyticsTracker.TrackAfterPayment(model);
 
-			return View("ReceiptPage", model);
+	        return View("ReceiptPage", model);
 		}
 
-	    private void TrackAfterPayment(ReceiptViewModel model)
+	    private ReceiptViewModel GetReceiptForPayment(DibsPaymentResult result)
 	    {
-            // Track Analytics 
-            GoogleAnalyticsTracking tracking = new GoogleAnalyticsTracking(ControllerContext.HttpContext);
-
-            // Add the products
-            int i = 1;
-            foreach (OrderLineViewModel orderLine in model.Order.OrderLines)
-            {
-                if(string.IsNullOrEmpty(orderLine.Code) == false)
-                {
-                    tracking.ProductAdd(code: orderLine.Code,
-                        name: orderLine.Name,
-                        quantity: orderLine.Quantity,
-                        price: (double)orderLine.Price,
-                        position: i
-                        );
-                    i++;
-                }
-            }
-
-            // And the transaction itself
-            tracking.Purchase(model.Order.OrderNumber,
-                null, (double) model.Order.TotalAmount, (double) model.Order.Tax, (double) model.Order.Shipping);
+	        var processingResult = _paymentProcessor.ProcessPaymentResult(result, _identityProvider.GetIdentity());
+	        return _receiptViewModelBuilder.BuildFor(processingResult);
 	    }
 
 	    [HttpPost]

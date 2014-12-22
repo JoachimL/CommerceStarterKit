@@ -19,29 +19,18 @@ using OxxCommerceStarterKit.Web.Models.PageTypes;
 
 namespace OxxCommerceStarterKit.Web.Business
 {
-    public class SiteConfiguration
+    public class SiteConfiguration : ISiteSettingsProvider
     {
-        private SiteConfiguration()
-        {
-        }
-
-        public SettingsBlock Settings { get; set; }
-
-        public static SiteConfiguration Current()
+        public SettingsBlock GetSettings()
         {
             var contentLoader = ServiceLocator.Current.GetInstance<IContentLoader>();
             // This can actually be 0 if we have a problem with our language settings
             if (ContentReference.StartPage != null && ContentReference.StartPage.ID > 0)
             {
                 var startPage = contentLoader.Get<HomePage>(ContentReference.StartPage);
-                SiteConfiguration config = new SiteConfiguration
-                {
-                    Settings = startPage.Settings
-                };
-
-                return config;
+                return startPage.Settings;
             }
-            return new SiteConfiguration();
+            return null;
         }
     }
 }

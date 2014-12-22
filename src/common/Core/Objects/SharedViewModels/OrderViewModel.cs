@@ -10,11 +10,13 @@ Copyright (C) 2013-2014 BV Network AS
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Reflection;
 using EPiServer.ServiceLocation;
 using log4net;
 using Mediachase.Commerce;
+using Mediachase.Commerce.Markets;
 using Mediachase.Commerce.Orders;
 using Newtonsoft.Json;
 using OxxCommerceStarterKit.Core.Extensions;
@@ -22,114 +24,94 @@ using OxxCommerceStarterKit.Core.Services;
 
 namespace OxxCommerceStarterKit.Core.Objects.SharedViewModels
 {
-	public class OrderViewModel
-	{
+    public class OrderViewModel
+    {
         protected static ILog _log = LogManager.GetLogger(MethodBase.GetCurrentMethod().DeclaringType);
-	    protected IMarket _currentMarket = null;
 
-		public OrderViewModel()
-		{
-			OrderLines = new List<OrderLineViewModel>();
-			OrderDate = DateTime.MinValue;
-		    _currentMarket = ServiceLocator.Current.GetInstance<ICurrentMarket>().GetCurrentMarket();
-		}
+        private IFormatProvider _currencyFormat;
 
-		public OrderViewModel(PurchaseOrder order)
-			: this()
-		{
-			OrderNumber = order.TrackingNumber;
-			OrderDate = order.Created;
-			Status = order.Status;
+        public OrderViewModel(IFormatProvider currencyFormat)
+        {
+            if (currencyFormat == null)
+                throw new ArgumentNullException("currencyFormat");
+            OrderLines = new List<OrderLineViewModel>();
+            OrderDate = DateTime.MinValue;
+            _currencyFormat = currencyFormat;
+        }
 
-			TotalLineItemsAmount = order.OrderForms[0].LineItems.Sum(i => i.ExtendedPrice);
-			TotalAmount = order.Total;
-			Shipping = order.ShippingTotal;
-			
+        public OrderViewModel(IFormatProvider currencyFormat, PurchaseOrderModel order)
+            : this(currencyFormat)
+        {
+            OrderNumber = order.TrackingNumber;
+            OrderDate = order.Created;
+            Status = order.Status;
+
+            TotalLineItemsAmount = order.OrderForms.First().LineItems.Sum(i => i.ExtendedPrice);
+            TotalAmount = order.Total;
+            Shipping = order.ShippingTotal;
+
             // TODO: Make taxes work as it should, instead of flat hard codet 25% tax
-			if (order.TaxTotal == 0 && order.Total > 0)
-			{
-				order.TaxTotal = ((decimal)0.25) * order.Total;
-			}
-			Tax = order.TaxTotal;
+            if (order.TaxTotal == 0 && order.Total > 0)
+            {
+                order.TaxTotal = ((decimal)0.25) * order.Total;
+            }
+            Tax = order.TaxTotal;
 
 
-			Discount = order.OrderForms[0].LineItems.Sum(i => i.LineItemDiscountAmount + i.OrderLevelDiscountAmount) + order.OrderForms[0].Shipments[0].ShippingDiscountAmount;
-			if (order.OrderForms.Count > 0 && order.OrderForms[0].Payments.Count > 0)
-			{
-				PaymentMethod = order.OrderForms[0].Payments[0].PaymentMethodName;
-			}
+            Discount = order.OrderForms.First().LineItems.Sum(i => i.LineItemDiscountAmount + i.OrderLevelDiscountAmount) + order.OrderForms.First().Shipments.First().ShippingDiscountAmount;
+            if (order.OrderForms.Any() && order.OrderForms.First().Payments.Any())
+            {
+                PaymentMethod = order.OrderForms.First().Payments.First().PaymentMethodName;
+            }
 
-			try
-			{
-				Email = order.GetBillingEmail();
-				Phone = order.GetBillingPhone();
-			}
-			catch (Exception ex)
-			{
-                // TODO: Inspect this, do we need a try catch here?
-                _log.Error("Error getting email and/or phone for customer", ex);
-			}
+            Email = order.BillingEmail;
+            Phone = order.BillingPhone;
+            BillingAddress = new Address(order.OrderAddresses.FirstOrDefault(a => a.Name == Constants.Order.BillingAddressName));
+            var shippingAddress = order.OrderAddresses.FirstOrDefault(a => a.Name == Constants.Order.ShippingAddressName);
+            ShippingAddress = new Address(shippingAddress);
+            DeliveryLocation = "";
+            if (shippingAddress != null && !string.IsNullOrWhiteSpace(shippingAddress.DeliveryServicePoint))
+                DeliveryLocation = shippingAddress.DeliveryServicePoint;
 
-			BillingAddress = new Address(order.OrderAddresses.FirstOrDefault(a => a.Name == Constants.Order.BillingAddressName));
-			var shippingAddress = order.OrderAddresses.FirstOrDefault(a => a.Name == Constants.Order.ShippingAddressName);
-			ShippingAddress = new Address(shippingAddress);
-			DeliveryLocation = "";
-			if (!string.IsNullOrWhiteSpace((string)shippingAddress[Constants.Metadata.Address.DeliveryServicePoint]))
-			{
-			    try
-			    {
-			        var deliveryServicePoint =
-			            JsonConvert.DeserializeObject<ServicePoint>(
-			                (string) shippingAddress[Constants.Metadata.Address.DeliveryServicePoint]);
-			        DeliveryLocation = deliveryServicePoint.Name;
-			    }
-			    catch (Exception ex)
-			    {
-                    // Todo: Move to method with more documentation about why this can fail
-			        _log.Error("Error during deserializing delivery location", ex);
-			    }
-			}
-	
-			foreach (Mediachase.Commerce.Orders.LineItem item in order.OrderForms[0].LineItems)
-			{
-				OrderLines.Add(new OrderLineViewModel(item));
-			}
+            foreach (var item in order.OrderForms.First().LineItems)
+            {
+                OrderLines.Add(new OrderLineViewModel(item));
+            }
 
-			// discounts
-			var discounts = CartService.GetAllDiscounts(order);
-			DiscountCodes = discounts.Where(x => !string.IsNullOrEmpty(x.DiscountCode)).Select(x => x.DiscountCode).ToList();
+            // discounts
+            var discounts = CartService.GetAllDiscounts(order);
+            DiscountCodes = discounts.Where(x => !string.IsNullOrEmpty(x.DiscountCode)).Select(x => x.DiscountCode).ToList();
+
+            ShippingTrackingNumber = "";
+            if (order.OrderForms.Any() &&
+                order.OrderForms.First().Shipments != null &&
+                order.OrderForms.First().Shipments.Any())
+            {
+                ShippingTrackingNumber = order.OrderForms.First().Shipments.First().ShipmentTrackingNumber;
+            }
+
+            ErpOrderNumber = order.BackendOrderNumber;
+        }
 
 
-			ShippingTrackingNumber = "";
-			if (order.OrderForms.Count > 0 && 
-				order.OrderForms[0].Shipments != null && 
-				order.OrderForms[0].Shipments.Count > 0)
-			{
-				ShippingTrackingNumber = order.OrderForms[0].Shipments[0].ShipmentTrackingNumber;
-			}
+        public string OrderNumber { get; set; }
+        public DateTime OrderDate { get; set; }
+        public string Status { get; set; }
+        public List<OrderLineViewModel> OrderLines { get; set; }
+        public decimal TotalLineItemsAmount { get; set; }
+        public decimal TotalAmount { get; set; }
+        public decimal Tax { get; set; }
+        public decimal Shipping { get; set; }
+        public decimal Discount { get; set; }
+        public List<string> DiscountCodes { get; set; }
+        public string PaymentMethod { get; set; }
 
-			ErpOrderNumber = order.GetStringValue(Constants.Metadata.PurchaseOrder.BackendOrderNumber);
-		}
-
-
-		public string OrderNumber { get; set; }
-		public DateTime OrderDate { get; set; }
-		public string Status { get; set; }
-		public List<OrderLineViewModel> OrderLines { get; set; }
-		public decimal TotalLineItemsAmount { get; set; }
-		public decimal TotalAmount { get; set; }
-		public decimal Tax { get; set; }
-		public decimal Shipping { get; set; }
-		public decimal Discount { get; set; }
-		public List<string> DiscountCodes { get; set; }
-		public string PaymentMethod { get; set; }
-
-		public Address BillingAddress { get; set; }
-		public Address ShippingAddress { get; set; }
-		public string SocialSecurityNumber { get; set; }
-		public string Email { get; set; }
-		public string Phone { get; set; }
-		public string ShippingTrackingNumber { get; set; }
+        public Address BillingAddress { get; set; }
+        public Address ShippingAddress { get; set; }
+        public string SocialSecurityNumber { get; set; }
+        public string Email { get; set; }
+        public string Phone { get; set; }
+        public string ShippingTrackingNumber { get; set; }
 
         /// <summary>
         /// The ERP order number, if you cannot use the one
@@ -142,17 +124,16 @@ namespace OxxCommerceStarterKit.Core.Objects.SharedViewModels
         /// </remarks>
         public string ErpOrderNumber { get; set; }
 
-		public string DeliveryLocation { get; set; }
+        public string DeliveryLocation { get; set; }
 
-		public string FormatMoney(decimal input)
-		{
-		    return input.ToString("C",_currentMarket.DefaultCurrency.Format); // "### ### ### ##0.00") + " kr";
-		}
+        public string FormatMoney(decimal input)
+        {
+            return input.ToString("C", _currencyFormat);
+        }
 
-		public string FormatMoneyForReceipt(decimal input)
-		{
-		    return FormatMoney(input);
-		    // return "kr " + input.ToString("### ### ### ##0.00");
-		}
-	}
+        public string FormatMoneyForReceipt(decimal input)
+        {
+            return FormatMoney(input);
+        }
+    }
 }

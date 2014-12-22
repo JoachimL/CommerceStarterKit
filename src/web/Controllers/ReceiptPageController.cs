@@ -11,6 +11,7 @@ Copyright (C) 2013-2014 BV Network AS
 using System.Collections.Generic;
 using System.Web.Mvc;
 using EPiServer;
+using Mediachase.Commerce;
 using OxxCommerceStarterKit.Core.Objects;
 using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 using OxxCommerceStarterKit.Core.Repositories.Interfaces;
@@ -21,13 +22,12 @@ namespace OxxCommerceStarterKit.Web.Controllers
 {
 	public class ReceiptPageController : PageControllerBase<ReceiptPage>
 	{
-		private readonly IContentRepository _contentRepository;
-		private readonly IOrderRepository _orderRepository;
+        private readonly ICurrentMarket _currentMarket;
 
-		public ReceiptPageController(IContentRepository contentRepository, IOrderRepository orderRepository)
+
+		public ReceiptPageController(ICurrentMarket currentMarket)
 		{
-			_contentRepository = contentRepository;
-			_orderRepository = orderRepository;
+		    _currentMarket = currentMarket;
 		}
 
 		public ActionResult Index(ReceiptPage currentPage)
@@ -36,7 +36,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
 
 
 			// Dummy data to see how the cart looks like in edit
-			model.Order = new OrderViewModel();
+            model.Order = new OrderViewModel(_currentMarket.GetCurrentMarket().DefaultCurrency.Format);
 			if (EPiServer.Editor.PageEditing.PageIsInEditMode)
 			{
 				model.Order.OrderNumber = "PO01234";

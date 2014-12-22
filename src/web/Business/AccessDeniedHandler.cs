@@ -44,7 +44,7 @@ namespace OxxCommerceStarterKit.Web.Business
                 AccessDeniedHandler.BrowserLogonAccessDenied();
         }
 
-
+        /// <summary>
         /// Sends an access denied message when using bowser-based authentication (Basic Auth or NTLM).
         /// 
         /// </summary>
@@ -64,12 +64,12 @@ namespace OxxCommerceStarterKit.Web.Business
         /// <param name="filter"></param>
         private static void FormLogonAccessDenied(AuthorizationContext filter)
         {
-            IContentRepository contentRepository = ServiceLocator.Current.GetInstance<IContentRepository>();
-            UrlResolver urlResolver = ServiceLocator.Current.GetInstance<UrlResolver>();
+            var configuration = ServiceLocator.Current.GetInstance<ISiteSettingsProvider>();
+            var urlResolver = ServiceLocator.Current.GetInstance<UrlResolver>();
 
             string str = HttpContext.Current.Request.Url.PathAndQuery;
             var loginUrl =
-                urlResolver.GetUrl(SiteConfiguration.Current().Settings.LoginPage);
+                urlResolver.GetUrl(configuration.GetSettings().LoginPage);
 
             filter.Result = new RedirectResult(loginUrl + "?ReturnUrl=" + HttpContext.Current.Server.UrlEncode(str));
         }

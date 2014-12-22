@@ -8,8 +8,10 @@ Copyright (C) 2013-2014 BV Network AS
 
 */
 
+using System;
 using System.Collections.Generic;
 using OxxCommerceStarterKit.Core.Objects;
+using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 
 namespace OxxCommerceStarterKit.Core.Services
 {
@@ -18,5 +20,8 @@ namespace OxxCommerceStarterKit.Core.Services
         List<LineItem> GetItems();
 
         string GetCustomerEmail();
+
+        PurchaseOrderModel GetOrderByTrackingNumber(string trackingNumber);
+        List<PurchaseOrderModel> GetOrdersByUserId(Guid customerId);
     }
 }

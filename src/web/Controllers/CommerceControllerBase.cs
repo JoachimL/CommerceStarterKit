@@ -175,6 +175,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
         {
             return new Lazy<Inventory>(() => stockPlacement.GetStockPlacement(InventoryLoader).FirstOrDefault(x => x.WarehouseCode == warehouseCode), true);
         }
+
         protected Price GetPrice(IPricing pricing)
         {
             return pricing.GetPrices(PricingLoader).FirstOrDefault(x => x.MarketId == CurrentMarket.GetCurrentMarket().MarketId);
@@ -191,7 +192,9 @@ namespace OxxCommerceStarterKit.Web.Controllers
 
         protected bool HasPrice(VariationContent variationContent)
         {
-            var price = variationContent.GetPrices(PricingLoader).FirstOrDefault(x => x.MarketId == CurrentMarket.GetCurrentMarket().MarketId);
+            var price = variationContent
+                .GetPrices(PricingLoader)
+                .FirstOrDefault(x => x.MarketId == CurrentMarket.GetCurrentMarket().MarketId);
             return price != null &&
                 price.UnitPrice != null;
         }
