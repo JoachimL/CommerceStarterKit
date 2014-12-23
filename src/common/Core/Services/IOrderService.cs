@@ -17,11 +17,7 @@ namespace OxxCommerceStarterKit.Core.Services
 {
     public interface IOrderService
     {
-        List<LineItem> GetItems();
-
-        string GetCustomerEmail();
-
         PurchaseOrderModel GetOrderByTrackingNumber(string trackingNumber);
-        List<PurchaseOrderModel> GetOrdersByUserId(Guid customerId);
+        IEnumerable<PurchaseOrderModel> GetOrdersByUserId(Guid customerId);
     }
 }

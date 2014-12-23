@@ -11,13 +11,11 @@ Copyright (C) 2013-2014 BV Network AS
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using AuthorizeNet;
 using Mediachase.Commerce.Orders;
 using Newtonsoft.Json;
 using OxxCommerceStarterKit.Core.Extensions;
 using OxxCommerceStarterKit.Core.Objects;
-using OxxCommerceStarterKit.Core.Repositories;
-using LineItem = OxxCommerceStarterKit.Core.Objects.LineItem;
+using OxxCommerceStarterKit.Core.Repositories.Interfaces;
 using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
 using EPiServer.Logging;
 
@@ -26,64 +24,25 @@ namespace OxxCommerceStarterKit.Core.Services
     public class OrderService : IOrderService
     {
         private static readonly ILogger Log = LogManager.GetLogger();
-        private PurchaseOrder _purchaseOrder;
+        private readonly IOrderRepository _orderRepository;
 
-        public List<LineItem> GetItems()
+        public OrderService(IOrderRepository orderRepository)
         {
-            return MapCartItems(_purchaseOrder.OrderForms[0].LineItems.ToArray(), "no");
+            _orderRepository = orderRepository;
         }
 
-        private List<LineItem> MapCartItems(IEnumerable<Mediachase.Commerce.Orders.LineItem> lineItems, string language)
+        public PurchaseOrderModel GetOrderByTrackingNumber(string trackingNumber)
         {
-
-            List<LineItem> items = new List<LineItem>();
-
-
-            if (lineItems != null)
-                foreach (Mediachase.Commerce.Orders.LineItem lineItem in lineItems)
-                {
-                    items.Add(new LineItem
-                    {
-                        Code = lineItem.CatalogEntryId,
-                        Name = lineItem.GetStringValue(Constants.Metadata.LineItem.DisplayName),
-                        ArticleNumber = lineItem.GetStringValue(Constants.Metadata.LineItem.ArticleNumber),
-                        ImageUrl = lineItem.GetString(Constants.Metadata.LineItem.ImageUrl),
-                        Color = lineItem.GetStringValue(Constants.Metadata.LineItem.Color),
-                        ColorImageUrl = lineItem.GetStringValue(Constants.Metadata.LineItem.ColorImageUrl),
-                        Description = lineItem.GetStringValue(Constants.Metadata.LineItem.Description),
-                        Size = lineItem.GetStringValue(Constants.Metadata.LineItem.Size),
-                        PlacedPrice = lineItem.PlacedPrice,
-                        LineItemTotal = lineItem.Quantity * lineItem.PlacedPrice,
-                        LineItemDiscount = lineItem.LineItemDiscountAmount,
-                        LineItemOrderLevelDiscount = lineItem.OrderLevelDiscountAmount,
-                        Quantity = Convert.ToInt32(lineItem.Quantity),
-                        Url = lineItem.GetEntryLink(language)
-                    });
-                }
-
-            return items;
+            return MapToModel(_orderRepository.GetOrderByTrackingNumber(trackingNumber));
         }
 
-        public string GetCustomerEmail()
+        public IEnumerable<PurchaseOrderModel> GetOrdersByUserId(Guid customerId)
         {
-            return _purchaseOrder.GetBillingEmail();
+            var orders = _orderRepository.GetOrdersByUserId(customerId);
+            return orders == null ? Enumerable.Empty<PurchaseOrderModel>() : orders.Select(MapToModel).ToList();
         }
 
-
-        public Objects.SharedViewModels.PurchaseOrderModel GetOrderByTrackingNumber(string trackingNumber)
-        {
-            return MapToModel(new OrderRepository().GetOrderByTrackingNumber(trackingNumber));
-        }
-
-        public List<Objects.SharedViewModels.PurchaseOrderModel> GetOrdersByUserId(Guid customerId)
-        {
-            var orders = new OrderRepository().GetOrdersByUserId(customerId);
-            if (orders == null)
-                return Enumerable.Empty<PurchaseOrderModel>().ToList();
-            return orders.Select(MapToModel).ToList();
-        }
-
-        private Objects.SharedViewModels.PurchaseOrderModel MapToModel(PurchaseOrder purchaseOrder)
+        private PurchaseOrderModel MapToModel(PurchaseOrder purchaseOrder)
         {
             if (purchaseOrder == null)
                 return null;
