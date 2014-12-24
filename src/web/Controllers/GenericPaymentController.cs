@@ -119,7 +119,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
                 // Must be run after order is complete, 
                 // This will release the order for shipment and 
                 // send the order receipt by email
-                _paymentCompleteHandler.OnPaymentComplete(order, User.Identity);
+                _paymentCompleteHandler.ProcessCompletedPayment(order, User.Identity);
 
                 orderViewModel = new OrderViewModel(_currentMarket.GetCurrentMarket().DefaultCurrency.Format, order);
             }
@@ -217,7 +217,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
                 // Must be run after order is complete, 
                 // This will release the order for shipment and 
                 // send the order receipt by email
-                _paymentCompleteHandler.OnPaymentComplete(order, User.Identity);
+                _paymentCompleteHandler.ProcessCompletedPayment(order, User.Identity);
 
                 orderViewModel = new OrderViewModel(_currentMarket.GetCurrentMarket().DefaultCurrency.Format, order);
             }
