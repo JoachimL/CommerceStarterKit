@@ -34,9 +34,9 @@ using Mediachase.Commerce;
 using Mediachase.Commerce.Catalog;
 using Mediachase.Commerce.Catalog.Events;
 using OxxCommerceStarterKit.Core;
+using OxxCommerceStarterKit.Core.Customers;
 using OxxCommerceStarterKit.Core.Services;
 using OxxCommerceStarterKit.Web.Business.ClientTracking;
-using OxxCommerceStarterKit.Web.Business.Customers;
 using OxxCommerceStarterKit.Web.Business.Payment;
 using OxxCommerceStarterKit.Web.Controllers;
 using OxxCommerceStarterKit.Web.ModelBuilders;
@@ -45,7 +45,7 @@ using OxxCommerceStarterKit.Web.Services.Email;
 using OxxCommerceStarterKit.Web.Services.Email.Models;
 using Postal;
 using EmailService = OxxCommerceStarterKit.Web.Services.Email.EmailService;
-using IEmailService = OxxCommerceStarterKit.Web.Services.Email.IEmailService;
+using IEmailService = OxxCommerceStarterKit.Core.Email.IEmailService;
 
 namespace OxxCommerceStarterKit.Web.Business.Initialization
 {

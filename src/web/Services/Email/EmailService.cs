@@ -9,10 +9,14 @@ Copyright (C) 2013-2014 BV Network AS
 */
 
 using System;
+using EPiServer;
+using EPiServer.Core;
 using EPiServer.Logging;
 using Mediachase.Commerce;
 using Mediachase.Commerce.Orders;
+using OxxCommerceStarterKit.Core.Email;
 using OxxCommerceStarterKit.Core.Objects.SharedViewModels;
+using OxxCommerceStarterKit.Web.Models.PageTypes;
 using OxxCommerceStarterKit.Web.Models.ViewModels.Email;
 using OxxCommerceStarterKit.Web.Services.Email.Models;
 
@@ -24,12 +28,14 @@ namespace OxxCommerceStarterKit.Web.Services.Email
         private readonly INotificationSettingsRepository _notificationSettingsRepository;
         private readonly IEmailDispatcher _emailDispatcher;
         private readonly ICurrentMarket _currentMarket;
+        private readonly IContentLoader _contentLoader;
 
-        public EmailService(INotificationSettingsRepository notificationSettingsRepository, IEmailDispatcher emailDispatcher, ICurrentMarket currentMarket)
+        public EmailService(INotificationSettingsRepository notificationSettingsRepository, IEmailDispatcher emailDispatcher, ICurrentMarket currentMarket, IContentLoader contentLoader)
         {
             _notificationSettingsRepository = notificationSettingsRepository;
             _emailDispatcher = emailDispatcher;
             _currentMarket = currentMarket;
+            _contentLoader = contentLoader;
         }
 
         public bool SendResetPasswordEmail(string email, string subject, string body, string passwordHash, string resetUrl)
@@ -77,6 +83,32 @@ namespace OxxCommerceStarterKit.Web.Services.Email
                 return true;
             Log.Error(result.Exception.Message, result.Exception);
             return false;
+        }
+
+        public bool SendWelcomeEmail(string email)
+        {
+            return SendWelcomeEmail(email, null);
+        }
+
+        public bool SendWelcomeEmail(string email, RegisterPage currentPage)
+        {
+            if (currentPage == null)
+                currentPage = GetRegisterPage();
+            if (currentPage != null)
+                return SendWelcomeEmail(email, currentPage.EmailSubject, currentPage.EmailBody.ToString());
+            return false;
+        }
+
+        private RegisterPage GetRegisterPage()
+        {
+            var homePage = _contentLoader.Get<HomePage>(ContentReference.StartPage);
+            if (homePage != null && homePage.Settings != null && homePage.Settings.LoginPage != null)
+            {
+                var loginPage = _contentLoader.Get<LoginPage>(homePage.Settings.LoginPage);
+                if (loginPage != null && loginPage.RegisterPage != null)
+                    return _contentLoader.Get<RegisterPage>(loginPage.RegisterPage);
+            }
+            return null;
         }
 
         public bool SendWelcomeEmail(string email, string subject, string body)

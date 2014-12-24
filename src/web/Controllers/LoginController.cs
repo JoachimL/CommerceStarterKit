@@ -22,6 +22,7 @@ using Mediachase.Commerce.Core;
 using Mediachase.Commerce.Customers;
 using Mediachase.Commerce.Customers.Profile;
 using Mediachase.Commerce.Security;
+using OxxCommerceStarterKit.Core.Email;
 using OxxCommerceStarterKit.Core.Objects;
 using OxxCommerceStarterKit.Web.Business;
 using OxxCommerceStarterKit.Web.Helpers;

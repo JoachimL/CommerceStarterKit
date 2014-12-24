@@ -20,6 +20,7 @@ using EPiServer;
 using EPiServer.Core;
 using EPiServer.Logging;
 using EPiServer.ServiceLocation;
+using OxxCommerceStarterKit.Core.Email;
 using OxxCommerceStarterKit.Web.Models.PageTypes;
 using OxxCommerceStarterKit.Web.Models.ViewModels;
 using OxxCommerceStarterKit.Web.Services.Email;

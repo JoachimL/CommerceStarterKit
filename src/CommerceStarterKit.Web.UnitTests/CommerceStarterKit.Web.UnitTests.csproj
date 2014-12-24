@@ -7,7 +7,7 @@
     <ProjectGuid>{102BB184-DC1A-43D3-9462-2A32BE581878}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>CommerceStarterKit.Web</RootNamespace>
+    <RootNamespace>OxxCommerceStarterKit.Web</RootNamespace>
     <AssemblyName>CommerceStarterKit.Web.UnitTests</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -275,6 +275,7 @@
   <ItemGroup>
     <Compile Include="Controllers\DibsPaymentControllerTests.cs" />
     <Compile Include="Controllers\PurchaseOrderStub.cs" />
+    <Compile Include="Payment\PaymentCompleteHandlerTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\Email\EmailServiceTests.cs" />
   </ItemGroup>

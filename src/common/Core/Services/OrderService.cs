@@ -11,8 +11,14 @@ Copyright (C) 2013-2014 BV Network AS
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Principal;
+using System.Web.Security;
+using Mediachase.Commerce.Customers;
 using Mediachase.Commerce.Orders;
+using Mediachase.Commerce.Orders.Managers;
 using Newtonsoft.Json;
+using OxxCommerceStarterKit.Core.Customers;
+using OxxCommerceStarterKit.Core.Email;
 using OxxCommerceStarterKit.Core.Extensions;
 using OxxCommerceStarterKit.Core.Objects;
 using OxxCommerceStarterKit.Core.Repositories.Interfaces;
@@ -25,10 +31,14 @@ namespace OxxCommerceStarterKit.Core.Services
     {
         private static readonly ILogger Log = LogManager.GetLogger();
         private readonly IOrderRepository _orderRepository;
+        private readonly ICustomerFactory _customerFactory;
+        private readonly IEmailService _emailService;
 
-        public OrderService(IOrderRepository orderRepository)
+        public OrderService(IOrderRepository orderRepository, ICustomerFactory customerFactory, IEmailService emailService)
         {
             _orderRepository = orderRepository;
+            _customerFactory = customerFactory;
+            _emailService = emailService;
         }
 
         public PurchaseOrderModel GetOrderByTrackingNumber(string trackingNumber)
@@ -137,7 +147,8 @@ namespace OxxCommerceStarterKit.Core.Services
                 LineItemDiscountAmount = item.LineItemDiscountAmount,
                 OrderLevelDiscountAmount = item.OrderLevelDiscountAmount,
                 Quantity = (int)item.Quantity,
-                Size = item.GetStringValue(Constants.Metadata.LineItem.Size)
+                Size = item.GetStringValue(Constants.Metadata.LineItem.Size),
+                WarehouseCode = item.WarehouseCode
             };
         }
 
@@ -219,5 +230,109 @@ namespace OxxCommerceStarterKit.Core.Services
             return string.Empty;
         }
 
+        public void FinalizeOrder(string trackingNumber, IIdentity identity)
+        {
+            var order = _orderRepository.GetOrderByTrackingNumber(trackingNumber);
+            // Create customer if anonymous
+            CreateUpdateCustomer(order, identity);
+
+            var shipment = order.OrderForms.First().Shipments.First();
+
+            OrderStatusManager.ReleaseOrderShipment(shipment);
+            OrderStatusManager.PickForPackingOrderShipment(shipment);
+
+            order.AcceptChanges();
+        }
+
+        public void CreateUpdateCustomer(PurchaseOrder order, IIdentity identity)
+        {
+            // try catch so this does not interrupt the order process.
+            try
+            {
+                var billingAddress = order.OrderAddresses.FirstOrDefault(x => x.Name == Constants.Order.BillingAddressName);
+                var shippingAddress = order.OrderAddresses.FirstOrDefault(x => x.Name == Constants.Order.ShippingAddressName);
+
+                // create customer if anonymous, or update join customer club and selected values on existing user
+                MembershipUser user = null;
+                if (!identity.IsAuthenticated)
+                {
+                    string email = billingAddress.Email.Trim();
+
+                    user = Membership.GetUser(email);
+                    if (user == null)
+                    {
+                        var customer = CreateCustomer(email, Guid.NewGuid().ToString(), billingAddress.DaytimePhoneNumber, billingAddress, shippingAddress, false, createStatus => Log.Error("Failed to create user during order completion. " + createStatus.ToString()));
+                        if (customer != null)
+                        {
+                            order.CustomerId = Guid.Parse(customer.PrimaryKeyId.Value.ToString());
+                            order.CustomerName = customer.FirstName + " " + customer.LastName;
+                            order.AcceptChanges();
+
+                            SetExtraCustomerProperties(order, customer);
+
+                            _emailService.SendWelcomeEmail(billingAddress.Email);
+                        }
+                    }
+                    else
+                    {
+                        var customer = CustomerContext.Current.GetContactForUser(user);
+                        order.CustomerName = customer.FirstName + " " + customer.LastName;
+                        order.CustomerId = Guid.Parse(customer.PrimaryKeyId.Value.ToString());
+                        order.AcceptChanges();
+                        SetExtraCustomerProperties(order, customer);
+
+                    }
+                }
+                else
+                {
+                    user = Membership.GetUser(identity.Name);
+                    var customer = CustomerContext.Current.GetContactForUser(user);
+                    SetExtraCustomerProperties(order, customer);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log here
+                Log.Error("Error during creating / update user", ex);
+            }
+        }
+
+        /// <summary>
+        /// If customer has joined the members club, then add the interest areas to the
+        /// customer profile.
+        /// </summary>
+        /// <remarks>
+        /// The request to join the member club is stored on the order during checkout.
+        /// </remarks>
+        /// <param name="order">The order.</param>
+        /// <param name="customer">The customer.</param>
+        private void SetExtraCustomerProperties(PurchaseOrder order, CustomerContact customer)
+        {
+            // TODO: Refactor for readability
+            // member club
+            if (order.OrderForms[0][Constants.Metadata.OrderForm.CustomerClub] != null && ((bool)order.OrderForms[0][Constants.Metadata.OrderForm.CustomerClub]) == true)
+            {
+                customer.CustomerGroup = Constants.CustomerGroup.CustomerClub;
+
+                // categories
+                if (!string.IsNullOrEmpty(order.OrderForms[0][Constants.Metadata.OrderForm.SelectedCategories] as string))
+                {
+                    var s = (order.OrderForms[0][Constants.Metadata.OrderForm.SelectedCategories] as string).Split(',').Select(x =>
+                    {
+                        int i = 0;
+                        Int32.TryParse(x, out i);
+                        return i;
+                    }).Where(x => x > 0).ToArray();
+                    customer.SetCategories(s);
+                }
+                customer.SaveChanges();
+            }
+        }
+
+        protected CustomerContact CreateCustomer(string email, string password, string phone, OrderAddress billingAddress, OrderAddress shippingAddress, bool hasPassword, Action<MembershipCreateStatus> userCreationFailed)
+        {
+            return _customerFactory.CreateCustomer(email, password, phone, billingAddress, shippingAddress, hasPassword,
+                userCreationFailed);
+        }
     }
 }

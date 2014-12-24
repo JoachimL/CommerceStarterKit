@@ -28,5 +28,7 @@ namespace OxxCommerceStarterKit.Core.Objects.SharedViewModels
         public string ArticleNumber { get; set; }
 
         public DiscountModel[] Discounts { get; set; }
+
+        public string WarehouseCode { get; set; }
     }
 }

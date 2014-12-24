@@ -23,6 +23,7 @@ using Mediachase.Commerce.Core;
 using Mediachase.Commerce.Customers;
 using Mediachase.Commerce.Security;
 using OxxCommerceStarterKit.Core;
+using OxxCommerceStarterKit.Core.Email;
 using OxxCommerceStarterKit.Core.Extensions;
 using OxxCommerceStarterKit.Core.Objects;
 using OxxCommerceStarterKit.Core.Repositories.Interfaces;
@@ -36,13 +37,13 @@ namespace OxxCommerceStarterKit.Web.Controllers
 	{
 		private readonly UrlResolver _urlResolver;
 		private readonly LocalizationService _localizationService;
-		private readonly ICurrentMarket _currentMarket;
+	    private readonly IEmailService _emailService;
 
-		public RegisterPageController(UrlResolver urlResolver, LocalizationService localizationService, ICurrentMarket currentMarket)
+		public RegisterPageController(UrlResolver urlResolver, LocalizationService localizationService, IEmailService emailService)
 		{
 			_urlResolver = urlResolver;
 			_localizationService = localizationService;
-			_currentMarket = currentMarket;
+		    _emailService = emailService;
 		}
 
 		public ActionResult Index(RegisterPage currentPage)
@@ -182,29 +183,9 @@ namespace OxxCommerceStarterKit.Web.Controllers
 		}
 
 
-		public static bool SendWelcomeEmail(string email, RegisterPage currentPage = null)
+		public bool SendWelcomeEmail(string email, RegisterPage currentPage = null)
 		{
-			var emailService = ServiceLocator.Current.GetInstance<IEmailService>();
-
-			if (currentPage == null)
-			{
-				var contentLoader = ServiceLocator.Current.GetInstance<EPiServer.IContentLoader>();
-				var homePage = contentLoader.Get<HomePage>(ContentReference.StartPage);
-				if (homePage != null && homePage.Settings != null && homePage.Settings.LoginPage != null)
-				{
-					var loginPage = contentLoader.Get<LoginPage>(homePage.Settings.LoginPage);
-					if (loginPage != null && loginPage.RegisterPage != null)
-					{
-						currentPage = contentLoader.Get<RegisterPage>(loginPage.RegisterPage);
-					}
-				}
-			}
-			if (currentPage != null)
-			{
-				return emailService.SendWelcomeEmail(email, currentPage.EmailSubject, currentPage.EmailBody.ToString());
-				
-			}
-			return false;
+		    return _emailService.SendWelcomeEmail(email);
 		}
 	}
 }

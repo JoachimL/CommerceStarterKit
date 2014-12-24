@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using EPiServer;
 using EPiServer.Core;
 using EPiServer.Core.Html.StringParsing;
 using EPiServer.Logging;
@@ -29,6 +30,7 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
         private string _header;
         private string _footer;
         private string _fromEmail;
+        private Mock<IContentLoader> _contentLoaderMock;
 
         [SetUp]
         public virtual void SetUp()
@@ -36,7 +38,8 @@ namespace CommerceStarterKit.Web.UnitTests.Services.Email
             SetUpNotificationSettings();
             _emailDispatcher = new Mock<IEmailDispatcher>();
             _currentMarketMock = new Mock<ICurrentMarket>();
-            _sut = new EmailService(_notificationSettingsRepositoryMock.Object, _emailDispatcher.Object, _currentMarketMock.Object);
+            _contentLoaderMock = new Mock<IContentLoader>();
+            _sut = new EmailService(_notificationSettingsRepositoryMock.Object, _emailDispatcher.Object, _currentMarketMock.Object, _contentLoaderMock.Object);
         }
 
         private void SetUpNotificationSettings()
