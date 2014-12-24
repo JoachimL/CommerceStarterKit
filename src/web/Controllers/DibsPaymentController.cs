@@ -129,7 +129,7 @@ namespace OxxCommerceStarterKit.Web.Controllers
         [RequireSSL]
         public ActionResult CancelPayment(DibsPaymentPage currentPage, DibsPaymentResult result)
         {
-            CancelPaymentViewModel model = new CancelPaymentViewModel(currentPage, result);
+            var model = new CancelPaymentViewModel(currentPage, result);
             return View("CancelPayment", model);
         }
     }

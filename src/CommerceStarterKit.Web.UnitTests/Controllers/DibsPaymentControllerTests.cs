@@ -28,11 +28,9 @@ namespace CommerceStarterKit.Web.Controllers
     {
         private static readonly Fixture Fixture = new Fixture();
         private DibsPaymentController _sut;
-        private Mock<IPaymentCompleteHandler> _paymentCompleteHandlerMock;
         private Mock<IContentRepository> _contentRepositoryMock;
         private Mock<IDibsPaymentProcessor> _dibsPaymentProcessorMock;
         private Mock<IReceiptViewModelBuilder> _receiptViewModelBuilderMock;
-
         private Mock<IIdentityProvider> _identityProvider;
         private SettingsBlock _settingsBlock;
         private Mock<IGoogleAnalyticsTracker> _googleAnalyticsTracker;
@@ -107,11 +105,16 @@ namespace CommerceStarterKit.Web.Controllers
             [Test]
             public void _then_the_payment_result_is_passed_to_the_payment_complete_processor()
             {
-
-                var result = (ViewResult)_sut.ProcessPayment(new DibsPaymentPage(), _paymentResponse);
-                var resultModel = (ReceiptViewModel)result.Model;
+                var resultModel = GetModel();
 
                 resultModel.ShouldEqual(_expectedModel);
+            }
+
+            private ReceiptViewModel GetModel()
+            {
+                var result = (ViewResult) _sut.ProcessPayment(new DibsPaymentPage(), _paymentResponse);
+                var resultModel = (ReceiptViewModel) result.Model;
+                return resultModel;
             }
 
             [Test]
