@@ -35,6 +35,7 @@ using OxxCommerceStarterKit.Core.PaymentProviders.Payment;
 using OxxCommerceStarterKit.Core.Repositories;
 using OxxCommerceStarterKit.Web.Business;
 using OxxCommerceStarterKit.Web.Business.Analytics;
+using OxxCommerceStarterKit.Web.Business.Customers;
 using OxxCommerceStarterKit.Web.Models;
 using OxxCommerceStarterKit.Web.Models.PageTypes;
 using OxxCommerceStarterKit.Web.Models.PageTypes.Payment;

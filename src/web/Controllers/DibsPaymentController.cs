@@ -21,6 +21,8 @@ using OxxCommerceStarterKit.Core.PaymentProviders;
 using OxxCommerceStarterKit.Core.PaymentProviders.DIBS;
 using OxxCommerceStarterKit.Web.Business;
 using OxxCommerceStarterKit.Web.Business.Analytics;
+using OxxCommerceStarterKit.Web.Business.ClientTracking;
+using OxxCommerceStarterKit.Web.Business.Payment;
 using OxxCommerceStarterKit.Web.Models.PageTypes.Payment;
 using OxxCommerceStarterKit.Web.Models.ViewModels;
 using OxxCommerceStarterKit.Web.Models.ViewModels.Payment;
