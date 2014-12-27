@@ -29,8 +29,8 @@ namespace OxxCommerceStarterKit.Web.Business.Payment
             var cartHelper = new CartHelper(Cart.DefaultName);
             if (cartHelper.Cart.OrderForms.Count == 0) 
                 return null;
-
-            var payment = cartHelper.Cart.OrderForms[0].Payments[0] as DibsPayment;
+            var cart = cartHelper.Cart;
+            var payment = cart.OrderForms[0].Payments[0] as DibsPayment;
             if (payment != null)
             {
                 payment.CardNumberMasked = result.CardNumberMasked;
