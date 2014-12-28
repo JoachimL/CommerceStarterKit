@@ -33,39 +33,38 @@ namespace OxxCommerceStarterKit.Core.Extensions
         }
 
 
-		public static void SetCategories(this CustomerContact contact, int[] values)
-		{
-			if (contact.Properties.Contains(Constants.Metadata.Customer.Category))
-			{
-				contact[Constants.Metadata.Customer.Category] = values;
-			}
-		}
+        public static void SetCategories(this CustomerContact contact, int[] values)
+        {
+            if (values != null && values.Length > 0)
+                if (contact.Properties.Contains(Constants.Metadata.Customer.Category))
+                    contact[Constants.Metadata.Customer.Category] = values;
+        }
 
 
-		public static int[] GetCategories(this CustomerContact contact)
-		{
-			if (contact.Properties.Contains(Constants.Metadata.Customer.Category))
-			{
-				return (int[])contact[Constants.Metadata.Customer.Category];
-			}
-			return null;
-		}
+        public static int[] GetCategories(this CustomerContact contact)
+        {
+            if (contact.Properties.Contains(Constants.Metadata.Customer.Category))
+            {
+                return (int[])contact[Constants.Metadata.Customer.Category];
+            }
+            return null;
+        }
 
-		public static bool GetHasPassword(this CustomerContact contact)
-		{
-			if (contact.Properties.Contains(Constants.Metadata.Customer.HasPassword))
-			{
-				return contact[Constants.Metadata.Customer.HasPassword] == null ? false : (bool)contact[Constants.Metadata.Customer.HasPassword];
-			}
-			return false;
-		}
+        public static bool GetHasPassword(this CustomerContact contact)
+        {
+            if (contact.Properties.Contains(Constants.Metadata.Customer.HasPassword))
+            {
+                return contact[Constants.Metadata.Customer.HasPassword] == null ? false : (bool)contact[Constants.Metadata.Customer.HasPassword];
+            }
+            return false;
+        }
 
-		public static void SetHasPassword(this CustomerContact contact, bool hasPassword)
-		{
-			if (contact.Properties.Contains(Constants.Metadata.Customer.HasPassword))
-			{
-				contact[Constants.Metadata.Customer.HasPassword] = hasPassword;
-			}
-		}
+        public static void SetHasPassword(this CustomerContact contact, bool hasPassword)
+        {
+            if (contact.Properties.Contains(Constants.Metadata.Customer.HasPassword))
+            {
+                contact[Constants.Metadata.Customer.HasPassword] = hasPassword;
+            }
+        }
     }
 }

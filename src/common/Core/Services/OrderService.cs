@@ -308,25 +308,32 @@ namespace OxxCommerceStarterKit.Core.Services
         /// <param name="customer">The customer.</param>
         private void SetExtraCustomerProperties(PurchaseOrder order, CustomerContact customer)
         {
-            // TODO: Refactor for readability
-            // member club
-            if (order.OrderForms[0][Constants.Metadata.OrderForm.CustomerClub] != null && ((bool)order.OrderForms[0][Constants.Metadata.OrderForm.CustomerClub]) == true)
-            {
-                customer.CustomerGroup = Constants.CustomerGroup.CustomerClub;
+            if (UserHasRegisteredForMembersClub(order))
+                UpdateCustomerWithMemberClubInfo(order, customer);
+        }
 
-                // categories
-                if (!string.IsNullOrEmpty(order.OrderForms[0][Constants.Metadata.OrderForm.SelectedCategories] as string))
+        private static bool UserHasRegisteredForMembersClub(PurchaseOrder order)
+        {
+            return order.OrderForms[0][Constants.Metadata.OrderForm.CustomerClub] != null && ((bool)order.OrderForms[0][Constants.Metadata.OrderForm.CustomerClub]);
+        }
+
+        private static void UpdateCustomerWithMemberClubInfo(PurchaseOrder order, CustomerContact customer)
+        {
+            customer.CustomerGroup = Constants.CustomerGroup.CustomerClub;
+            customer.SetCategories(GetSelectedInterestCategoriesFrom(order));
+            customer.SaveChanges();
+        }
+
+        private static int[] GetSelectedInterestCategoriesFrom(PurchaseOrder order)
+        {
+            var selectedCategories =
+                (order.OrderForms[0][Constants.Metadata.OrderForm.SelectedCategories] as string ?? "").Split(',').Select(x =>
                 {
-                    var s = (order.OrderForms[0][Constants.Metadata.OrderForm.SelectedCategories] as string).Split(',').Select(x =>
-                    {
-                        int i = 0;
-                        Int32.TryParse(x, out i);
-                        return i;
-                    }).Where(x => x > 0).ToArray();
-                    customer.SetCategories(s);
-                }
-                customer.SaveChanges();
-            }
+                    int i = 0;
+                    Int32.TryParse(x, out i);
+                    return i;
+                }).Where(x => x > 0).ToArray();
+            return selectedCategories;
         }
 
         protected CustomerContact CreateCustomer(string email, string password, string phone, OrderAddress billingAddress, OrderAddress shippingAddress, bool hasPassword, Action<MembershipCreateStatus> userCreationFailed)
