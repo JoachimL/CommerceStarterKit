@@ -15,7 +15,7 @@ namespace OxxCommerceStarterKit.Web.Business.Payment
     public class StockUpdater : IStockUpdater
     {
         private static readonly ILogger Log = LogManager.GetLogger();
-
+            
         public void AdjustStocks(PurchaseOrderModel order)
         {
             var warehouseRepository = ServiceLocator.Current.GetInstance<IWarehouseRepository>();

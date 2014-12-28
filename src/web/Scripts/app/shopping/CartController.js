@@ -116,7 +116,7 @@
 
 				delete $scope.getDeliveryLocationsTimeout;
 
-				$scope.getDeliveryLocations = $.get("/Cart/GetDeliveryLocations", { streetAddress: $scope.shippingAddressStreetAddress, postalCode: $scope.shippingAddressPostalCode, city: $scope.shippingAddressCity }, function (deliveryLocations) {
+				$scope.getDeliveryLocations = $.get("/api/deliverylocations/get", { streetAddress: $scope.shippingAddressStreetAddress, postalCode: $scope.shippingAddressPostalCode, city: $scope.shippingAddressCity }, function (deliveryLocations) {
 
 					for (var i = 0; i < deliveryLocations.length; ++i) {
 

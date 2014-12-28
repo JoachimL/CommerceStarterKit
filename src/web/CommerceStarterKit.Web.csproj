@@ -1028,6 +1028,8 @@
     <Compile Include="Api\ArticleSearchController.cs" />
     <Compile Include="Api\AutocompleteSearchController.cs" />
     <Compile Include="Api\BaseApiController.cs" />
+    <Compile Include="Api\DeliveryLocationsController.cs" />
+    <Compile Include="Api\StreetAddress.cs" />
     <Compile Include="Api\TagController.cs" />
     <Compile Include="Api\CartController.cs" />
     <Compile Include="Api\CheckoutController.cs" />
@@ -1058,6 +1060,7 @@
     <Compile Include="Business\ContentExtensions.cs" />
     <Compile Include="Business\CurrentMarketFromStartPage.cs" />
     <Compile Include="Business\CurrentMarketProfile.cs" />
+    <Compile Include="Business\Delivery\DeliveryLocation.cs" />
     <Compile Include="Business\Initialization\CatalogEventListener.cs" />
     <Compile Include="Business\Initialization\CommerceCachePrimer.cs" />
     <Compile Include="Business\Initialization\CustomizedRenderingInitialization.cs" />
@@ -1310,7 +1313,9 @@
     <Compile Include="Services\Email\Models\SendEmailResponse.cs" />
     <Compile Include="Services\Email\Models\Welcome.cs" />
     <Compile Include="Models\ViewModels\Contracts\IProductListViewModelInitializer.cs" />
+    <Compile Include="Services\PostNord\IPostNordClient.cs" />
     <Compile Include="Services\PostNord\PostNord.cs" />
+    <Compile Include="Services\PostNord\PostNordClient.cs" />
     <Compile Include="Services\ProductService.cs" />
   </ItemGroup>
   <ItemGroup>

@@ -41,6 +41,7 @@ using OxxCommerceStarterKit.Web.Business.Payment;
 using OxxCommerceStarterKit.Web.Controllers;
 using OxxCommerceStarterKit.Web.ModelBuilders;
 using OxxCommerceStarterKit.Web.ResetPassword;
+using OxxCommerceStarterKit.Web.Services;
 using OxxCommerceStarterKit.Web.Services.Email;
 using OxxCommerceStarterKit.Web.Services.Email.Models;
 using Postal;
@@ -156,6 +157,7 @@ namespace OxxCommerceStarterKit.Web.Business.Initialization
             context.Container.Configure(c => c.For<IOrderService>().Singleton().Use<OrderService>());
             context.Container.Configure(c => c.For<IPaymentCompleteHandler>().Singleton().Use<PaymentCompleteHandler>());
             context.Container.Configure(c => c.For<IHttpContextProvider>().Singleton().Use<HttpContextProvider>());
+            context.Container.Configure(c => c.For<IPostNordClient>().Singleton().Use<PostNordClient>());
         }
     }
 }
